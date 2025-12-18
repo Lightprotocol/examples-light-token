@@ -1,0 +1,41 @@
+{
+  "name": "light-token-cookbook",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Working examples for light-token operations on Solana devnet",
+  "scripts": {
+    "create-mint:action": "node --loader ts-node/esm create-mint-action.ts",
+    "create-mint:instruction": "node --loader ts-node/esm create-mint-instruction.ts",
+    "mint-to:action": "node --loader ts-node/esm mint-to-action.ts",
+    "mint-to:instruction": "node --loader ts-node/esm mint-to-instruction.ts",
+    "transfer-interface:action": "node --loader ts-node/esm transfer-interface-action.ts",
+    "transfer-interface:instruction": "node --loader ts-node/esm transfer-interface-instruction.ts",
+    "create-ata:action": "node --loader ts-node/esm create-ata-action.ts",
+    "create-ata:instruction": "node --loader ts-node/esm create-ata-instruction.ts",
+    "compress:action": "node --loader ts-node/esm compress-action.ts",
+    "compress:batch": "node --loader ts-node/esm compress-batch.ts",
+    "decompress:action": "node --loader ts-node/esm decompress-action.ts",
+    "decompress:with-token-pool": "node --loader ts-node/esm decompress-with-token-pool.ts",
+    "wrap:action": "node --loader ts-node/esm wrap-action.ts",
+    "wrap:instruction": "node --loader ts-node/esm wrap-instruction.ts",
+    "unwrap:action": "node --loader ts-node/esm unwrap-action.ts",
+    "unwrap:instruction": "node --loader ts-node/esm unwrap-instruction.ts",
+    "load-ata:action": "node --loader ts-node/esm load-ata-action.ts",
+    "load-ata:instruction": "node --loader ts-node/esm load-ata-instruction.ts",
+    "delegate:approve": "node --loader ts-node/esm delegate-approve.ts",
+    "delegate:revoke": "node --loader ts-node/esm delegate-revoke.ts",
+    "merge-accounts": "node --loader ts-node/esm merge-token-accounts.ts"
+  },
+  "dependencies": {
+    "@lightprotocol/compressed-token": "file:../light-protocol/js/compressed-token",
+    "@lightprotocol/stateless.js": "file:../light-protocol/js/stateless.js",
+    "@solana/spl-token": "^0.4.13",
+    "@solana/web3.js": "1.98.4",
+    "dotenv": "^16.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.0.0"
+  }
+}
