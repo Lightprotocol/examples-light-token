@@ -2,12 +2,12 @@
     "name": "examples-light-token",
     "private": true,
     "workspaces": [
-        "devnet-quickstart",
+        "quickstart",
         "cookbook",
         "toolkits/payments-and-wallets"
     ],
     "scripts": {
-        "quickstart": "npm run -w devnet-quickstart start",
+        "quickstart": "npm run -w quickstart start",
         "cookbook": "npm run -w cookbook",
         "toolkit:payments": "npm run -w toolkits/payments-and-wallets"
     }

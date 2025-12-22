@@ -18,11 +18,11 @@ const payer = Keypair.fromSecretKey(
 
 // Use a compatible RPC provider, such as Helius and Triton.
 // Enable to use Devnet:
-// dotenv.config();
-// const RPC_URL = `https://devnet.helius-rpc.com?api-key=${process.env.API_KEY!}`;
-
+dotenv.config();
+const RPC_URL = `https://devnet.helius-rpc.com?api-key=${process.env.API_KEY!}`;
+console.log("RPC_URL: ", RPC_URL);
 (async function () {
-    const rpc = createRpc();
+    const rpc = createRpc(RPC_URL);
 
     // 1. create mint
     const mintAuthority = payer;
