@@ -7,7 +7,7 @@ const CTOKEN_PROGRAM_ID: &str = "cTokenmWW8bLPjZEBAUgYy3zKxQZW6VKi7bqNFEVv3m";
 async fn main() -> anyhow::Result<()> {
     dotenvy::dotenv().ok();
 
-    let api_key = std::env::var("HELIUS_API_KEY")?;
+    let api_key = std::env::var("API_KEY")?;
     let endpoint = "https://laserstream-devnet-ewr.helius-rpc.com".to_string();
 
     let config = LaserstreamConfig::new(endpoint, api_key);

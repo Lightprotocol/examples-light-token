@@ -9,21 +9,21 @@ import {
     getAssociatedTokenAddressInterface,
     createAtaInterfaceIdempotent,
 } from "@lightprotocol/compressed-token";
-import { createAssociatedTokenAccount } from "@solana/spl-token";
+import { createAssociatedTokenAccount, getAccount } from "@solana/spl-token";
 
 async function main() {
-    // 1. Setup RPC and fund accounts
     const rpc = createRpc();
+
+    // Setup
     const payer = Keypair.generate();
     const airdropSig = await rpc.requestAirdrop(payer.publicKey, 10e9);
     await rpc.confirmTransaction(airdropSig, "confirmed");
-    console.log("Payer:", payer.publicKey.toBase58());
 
     const owner = Keypair.generate();
     const airdropSig2 = await rpc.requestAirdrop(owner.publicKey, 1e9);
     await rpc.confirmTransaction(airdropSig2, "confirmed");
 
-    // 2. Create SPL mint with token pool
+    // Create test mint
     const mintAuthority = Keypair.generate();
     const mintKeypair = Keypair.generate();
     const { mint } = await createMint(
@@ -35,7 +35,8 @@ async function main() {
     );
     console.log("Mint:", mint.toBase58());
 
-    // 3. Create SPL ATA and fund it
+    // Create SPL ATA and fund it
+    // (Simulates receiving tokens from CEX)
     const splAta = await createAssociatedTokenAccount(
         rpc,
         payer,
@@ -44,33 +45,37 @@ async function main() {
     );
     console.log("SPL ATA:", splAta.toBase58());
 
-    // Mint compressed then decompress to SPL ATA
+    // Mint compressed, then decompress to SPL (simulates CEX deposit)
     await mintTo(rpc, payer, mint, owner.publicKey, mintAuthority, bn(1000));
     await decompress(rpc, payer, mint, bn(1000), owner, splAta);
-    console.log("Funded SPL ATA with 1000 tokens");
 
-    // 4. Create c-token ATA (destination)
+    const splBalanceBefore = await getAccount(rpc, splAta);
+    console.log("SPL balance before wrap:", splBalanceBefore.amount.toString());
+
+    // Create c-token ATA (destination)
     const ctokenAta = getAssociatedTokenAddressInterface(mint, owner.publicKey);
     await createAtaInterfaceIdempotent(rpc, payer, mint, owner.publicKey);
-    console.log("c-token ATA:", ctokenAta.toBase58());
+    console.log("C-token ATA:", ctokenAta.toBase58());
 
-    // 5. Wrap SPL tokens to c-token ATA
+    // === WRAP: SPL → c-token ===
+    // On-ramp from CEX
     const signature = await wrap(
         rpc,
         payer,
-        splAta, // source: SPL token account
-        ctokenAta, // destination: c-token ATA
-        owner, // owner of source account (signer)
+        splAta,
+        ctokenAta,
+        owner,
         mint,
-        bn(500), // amount to wrap
+        bn(500),
     );
 
-    console.log("Wrapped 500 tokens to c-token ATA");
+    console.log("\n=== Wrapped 500 tokens ===");
     console.log("Transaction:", signature);
+
+    // Check balances after
+    const splBalanceAfter = await getAccount(rpc, splAta);
+    console.log("\nSPL balance after:", splBalanceAfter.amount.toString());
+    console.log("C-token ATA now has 500 tokens ready for payments");
 }
 
-main().catch((err) => {
-    console.error("Error:", err);
-    if (err.logs) console.error("Logs:", err.logs);
-    process.exit(1);
-});
+main().catch(console.error);

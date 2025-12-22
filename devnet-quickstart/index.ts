@@ -1,73 +1,81 @@
-import "dotenv/config";
+import dotenv from "dotenv";
 import { Keypair } from "@solana/web3.js";
-import { readFileSync } from "fs";
-import { homedir } from "os";
 import {
-  createRpc,
-  featureFlags,
-  VERSION,
+    bn,
+    createRpc,
+    selectStateTreeInfo,
 } from "@lightprotocol/stateless.js";
-import {
-  createMintInterface,
-  createAtaInterface,
-  mintToInterface,
-  getAssociatedTokenAddressInterface,
-} from "@lightprotocol/compressed-token";
+import { createMint, mintTo } from "@lightprotocol/compressed-token";
+import { getOrCreateAtaInterface } from "@lightprotocol/compressed-token/unified";
+import { homedir } from "os";
+import { readFileSync } from "fs";
 
-featureFlags.version = VERSION.V2;
-
-// Load wallet from filesystem
-const keypairPath =
-  process.env.KEYPAIR_PATH?.replace("~", homedir()) ||
-  `${homedir()}/.config/solana/id.json`;
+// Load wallet
+const keypairPath = `${homedir()}/.config/solana/id.json`;
 const payer = Keypair.fromSecretKey(
-  new Uint8Array(JSON.parse(readFileSync(keypairPath, "utf8")))
+    new Uint8Array(JSON.parse(readFileSync(keypairPath, "utf8")))
 );
 
-// Helius exposes Solana and compression RPC endpoints through a single URL
-const RPC_ENDPOINT = `https://devnet.helius-rpc.com?api-key=${process.env.api_key}`;
+// You can use any compatible RPC endpoint
+dotenv.config();
+const RPC_URL = `https://devnet.helius-rpc.com?api-key=${process.env.API_KEY!}`;
 
 async function main() {
-  // 1. Setup RPC connection
-  const rpc = createRpc(RPC_ENDPOINT, RPC_ENDPOINT, RPC_ENDPOINT);
-  console.log("Payer:", payer.publicKey.toBase58());
+    const rpc = createRpc(RPC_URL);
+    const infos = await rpc.getStateTreeInfos();
+    const treeInfo = selectStateTreeInfo(infos);
+    console.log(treeInfo);
 
-  // 2. Create a light-mint (payer is mint authority)
-  const mintSigner = Keypair.generate();
-  const { mint } = await createMintInterface(
-    rpc,
-    payer,
-    payer, // mintAuthority
-    null, // freezeAuthority
-    9, // decimals
-    mintSigner,
-  );
-  console.log("Mint created:", mint.toBase58());
+    // Create an SPL mint + enable compression.
+    const mintAuthority = Keypair.generate();
+    const mintSigner = Keypair.generate();
+    const { mint, transactionSignature: createMintSig } = await createMint(
+        rpc,
+        payer,
+        mintAuthority.publicKey,
+        9,
+        mintSigner
+    );
 
-  // 3. Create associated token account for recipient
-  const recipient = Keypair.generate();
-  await createAtaInterface(rpc, payer, mint, recipient.publicKey);
-  console.log("Recipient ATA created for:", recipient.publicKey.toBase58());
+    // Mint compressed tokens to a recipient (owner pubkey).
+    const recipient = Keypair.generate();
+    const amount = bn(1_000_000_000);
+    const mintToSig = await mintTo(
+        rpc,
+        payer,
+        mint,
+        recipient.publicKey,
+        mintAuthority,
+        amount,
+        treeInfo
+    );
 
-  // 4. Mint tokens to the recipient's account
-  const destination = getAssociatedTokenAddressInterface(mint, recipient.publicKey);
-  const amount = 1_000_000_000; // 1 token with 9 decimals
+    // Create/load the recipient's c-token ATA interface (loads cold balance to hot).
+    const recipientAccount = await getOrCreateAtaInterface(
+        rpc,
+        payer,
+        mint,
+        recipient
+    );
 
-  const txSignature = await mintToInterface(
-    rpc,
-    payer,
-    mint,
-    destination,
-    payer, // mintAuthority (must be Signer)
-    amount,
-  );
-
-  console.log("Minted tokens:", amount);
-  console.log(`Transaction: https://explorer.solana.com/tx/${txSignature}?cluster=devnet`);
+    console.log(
+        JSON.stringify(
+            {
+                payer: payer.publicKey.toBase58(),
+                mint: mint.toBase58(),
+                recipient: recipient.publicKey.toBase58(),
+                recipientAta: recipientAccount.parsed.address.toBase58(),
+                recipientBalance: recipientAccount.parsed.amount.toString(),
+                createMintTx: createMintSig,
+                mintTx: mintToSig,
+            },
+            null,
+            2
+        )
+    );
 }
 
 main().catch((err) => {
-  console.error("Error:", err);
-  if (err.logs) console.error("Logs:", err.logs);
-  process.exit(1);
+    console.error(err);
+    process.exit(1);
 });

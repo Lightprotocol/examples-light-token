@@ -6,7 +6,7 @@
 
 ## Quick Reference
 
-| Operation      | SPL                             | Light                     |
+| Operation      | SPL                                   | Light                                  |
 | -------------- | ------------------------------------- | -------------------------------------- |
 | Get/Create ATA | `getOrCreateAssociatedTokenAccount()` | `getOrCreateAtaInterface()`            |
 | Derive ATA     | `getAssociatedTokenAddress()`         | `getAssociatedTokenAddressInterface()` |
@@ -21,11 +21,11 @@
 import { createRpc } from "@lightprotocol/stateless.js";
 
 import {
-  getOrCreateAtaInterface,
-  getAtaInterface,
-  getAssociatedTokenAddressInterface,
-  transferInterface,
-  unwrap,
+    getOrCreateAtaInterface,
+    getAtaInterface,
+    getAssociatedTokenAddressInterface,
+    transferInterface,
+    unwrap,
 } from "@lightprotocol/compressed-token/unified";
 
 const rpc = createRpc(RPC_ENDPOINT);
@@ -43,10 +43,10 @@ const rpc = createRpc(RPC_ENDPOINT);
 import { getOrCreateAssociatedTokenAccount } from "@solana/spl-token";
 
 const ata = await getOrCreateAssociatedTokenAccount(
-  connection,
-  payer,
-  mint,
-  recipient
+    connection,
+    payer,
+    mint,
+    recipient,
 );
 // Share ata.address with sender
 
@@ -59,19 +59,19 @@ console.log(ata.amount);
 
 ```typescript
 import {
-  getAssociatedTokenAddressSync,
-  createAssociatedTokenAccountIdempotentInstruction,
+    getAssociatedTokenAddressSync,
+    createAssociatedTokenAccountIdempotentInstruction,
 } from "@solana/spl-token";
 
 const ata = getAssociatedTokenAddressSync(mint, recipient);
 
 const tx = new Transaction().add(
-  createAssociatedTokenAccountIdempotentInstruction(
-    payer.publicKey,
-    ata,
-    recipient,
-    mint
-  )
+    createAssociatedTokenAccountIdempotentInstruction(
+        payer.publicKey,
+        ata,
+        recipient,
+        mint,
+    ),
 );
 ```
 
@@ -88,29 +88,29 @@ console.log(ata.parsed.amount);
 
 ```typescript
 import {
-  createAssociatedTokenAccountInterfaceIdempotentInstruction,
-  createLoadAtaInstructions,
-  getAssociatedTokenAddressInterface,
+    createAssociatedTokenAccountInterfaceIdempotentInstruction,
+    createLoadAtaInstructions,
+    getAssociatedTokenAddressInterface,
 } from "@lightprotocol/compressed-token/unified";
 import { CTOKEN_PROGRAM_ID } from "@lightprotocol/stateless.js";
 
 const ata = getAssociatedTokenAddressInterface(mint, recipient);
 
 const tx = new Transaction().add(
-  createAssociatedTokenAccountInterfaceIdempotentInstruction(
-    payer.publicKey,
-    ata,
-    recipient,
-    mint,
-    CTOKEN_PROGRAM_ID
-  ),
-  ...(await createLoadAtaInstructions(
-    rpc,
-    ata,
-    recipient,
-    mint,
-    payer.publicKey
-  ))
+    createAssociatedTokenAccountInterfaceIdempotentInstruction(
+        payer.publicKey,
+        ata,
+        recipient,
+        mint,
+        CTOKEN_PROGRAM_ID,
+    ),
+    ...(await createLoadAtaInstructions(
+        rpc,
+        ata,
+        recipient,
+        mint,
+        payer.publicKey,
+    )),
 );
 ```
 
@@ -128,13 +128,13 @@ const sourceAta = getAssociatedTokenAddressSync(mint, owner.publicKey);
 const destinationAta = getAssociatedTokenAddressSync(mint, recipient);
 
 await transfer(
-  connection,
-  payer,
-  sourceAta,
-  destinationAta,
-  owner,
-  amount,
-  decimals
+    connection,
+    payer,
+    sourceAta,
+    destinationAta,
+    owner,
+    amount,
+    decimals,
 );
 ```
 
@@ -144,15 +144,20 @@ await transfer(
 
 ```typescript
 import {
-  getAssociatedTokenAddressSync,
-  createTransferInstruction,
+    getAssociatedTokenAddressSync,
+    createTransferInstruction,
 } from "@solana/spl-token";
 
 const sourceAta = getAssociatedTokenAddressSync(mint, owner.publicKey);
 const destinationAta = getAssociatedTokenAddressSync(mint, recipient);
 
 const tx = new Transaction().add(
-  createTransferInstruction(sourceAta, destinationAta, owner.publicKey, amount)
+    createTransferInstruction(
+        sourceAta,
+        destinationAta,
+        owner.publicKey,
+        amount,
+    ),
 );
 ```
 
@@ -163,13 +168,13 @@ const sourceAta = getAssociatedTokenAddressInterface(mint, owner.publicKey);
 const destinationAta = getAssociatedTokenAddressInterface(mint, recipient);
 
 await transferInterface(
-  rpc,
-  payer,
-  sourceAta,
-  mint,
-  destinationAta,
-  owner,
-  amount
+    rpc,
+    payer,
+    sourceAta,
+    mint,
+    destinationAta,
+    owner,
+    amount,
 );
 ```
 
@@ -177,28 +182,28 @@ await transferInterface(
 
 ```typescript
 import {
-  createLoadAtaInstructions,
-  createTransferInterfaceInstruction,
-  getAssociatedTokenAddressInterface,
+    createLoadAtaInstructions,
+    createTransferInterfaceInstruction,
+    getAssociatedTokenAddressInterface,
 } from "@lightprotocol/compressed-token/unified";
 
 const sourceAta = getAssociatedTokenAddressInterface(mint, owner.publicKey);
 const destinationAta = getAssociatedTokenAddressInterface(mint, recipient);
 
 const tx = new Transaction().add(
-  ...(await createLoadAtaInstructions(
-    rpc,
-    sourceAta,
-    owner.publicKey,
-    mint,
-    payer.publicKey
-  )),
-  createTransferInterfaceInstruction(
-    sourceAta,
-    destinationAta,
-    owner.publicKey,
-    amount
-  )
+    ...(await createLoadAtaInstructions(
+        rpc,
+        sourceAta,
+        owner.publicKey,
+        mint,
+        payer.publicKey,
+    )),
+    createTransferInterfaceInstruction(
+        sourceAta,
+        destinationAta,
+        owner.publicKey,
+        amount,
+    ),
 );
 ```
 
@@ -208,16 +213,16 @@ To ensure your recipient's ATA exists you can prepend an idempotent creation ins
 
 ```typescript
 import {
-  getAssociatedTokenAddressSync,
-  createAssociatedTokenAccountIdempotentInstruction,
+    getAssociatedTokenAddressSync,
+    createAssociatedTokenAccountIdempotentInstruction,
 } from "@solana/spl-token";
 
 const destinationAta = getAssociatedTokenAddressSync(mint, recipient);
 const createAtaIx = createAssociatedTokenAccountIdempotentInstruction(
-  payer.publicKey,
-  destinationAta,
-  recipient,
-  mint
+    payer.publicKey,
+    destinationAta,
+    recipient,
+    mint,
 );
 
 new Transaction().add(createAtaIx, transferIx);
@@ -227,18 +232,18 @@ new Transaction().add(createAtaIx, transferIx);
 
 ```typescript
 import {
-  getAssociatedTokenAddressInterface,
-  createAssociatedTokenAccountInterfaceIdempotentInstruction,
+    getAssociatedTokenAddressInterface,
+    createAssociatedTokenAccountInterfaceIdempotentInstruction,
 } from "@lightprotocol/compressed-token/unified";
 import { CTOKEN_PROGRAM_ID } from "@lightprotocol/stateless.js";
 
 const destinationAta = getAssociatedTokenAddressInterface(mint, recipient);
 const createAtaIx = createAssociatedTokenAccountInterfaceIdempotentInstruction(
-  payer.publicKey,
-  destinationAta,
-  recipient,
-  mint,
-  CTOKEN_PROGRAM_ID
+    payer.publicKey,
+    destinationAta,
+    recipient,
+    mint,
+    CTOKEN_PROGRAM_ID,
 );
 
 new Transaction().add(createAtaIx, transferIx);
@@ -319,9 +324,9 @@ await unwrap(rpc, payer, owner, mint, splAta, amount);
 ```typescript
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import {
-  createLoadAtaInstructions,
-  createUnwrapInstruction,
-  getAssociatedTokenAddressInterface,
+    createLoadAtaInstructions,
+    createUnwrapInstruction,
+    getAssociatedTokenAddressInterface,
 } from "@lightprotocol/compressed-token/unified";
 import { getSplInterfaceInfos } from "@lightprotocol/compressed-token";
 
@@ -332,20 +337,20 @@ const splInterfaceInfos = await getSplInterfaceInfos(rpc, mint);
 const splInterfaceInfo = splInterfaceInfos.find((i) => i.isInitialized);
 
 const tx = new Transaction().add(
-  ...(await createLoadAtaInstructions(
-    rpc,
-    ctokenAta,
-    owner.publicKey,
-    mint,
-    payer.publicKey
-  )),
-  createUnwrapInstruction(
-    ctokenAta,
-    splAta,
-    owner.publicKey,
-    mint,
-    amount,
-    splInterfaceInfo
-  )
+    ...(await createLoadAtaInstructions(
+        rpc,
+        ctokenAta,
+        owner.publicKey,
+        mint,
+        payer.publicKey,
+    )),
+    createUnwrapInstruction(
+        ctokenAta,
+        splAta,
+        owner.publicKey,
+        mint,
+        amount,
+        splInterfaceInfo,
+    ),
 );
 ```

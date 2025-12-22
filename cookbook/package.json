@@ -1,41 +1,41 @@
 {
-  "name": "light-token-cookbook",
-  "version": "1.0.0",
-  "type": "module",
-  "description": "Working examples for light-token operations on Solana devnet",
-  "scripts": {
-    "create-mint:action": "node --loader ts-node/esm actions/create-mint.ts",
-    "create-mint:instruction": "node --loader ts-node/esm instructions/create-mint.ts",
-    "mint-to:action": "node --loader ts-node/esm actions/mint-to.ts",
-    "mint-to:instruction": "node --loader ts-node/esm instructions/mint-to.ts",
-    "transfer-interface:action": "node --loader ts-node/esm actions/transfer-interface.ts",
-    "transfer-interface:instruction": "node --loader ts-node/esm instructions/transfer-interface.ts",
-    "create-ata:action": "node --loader ts-node/esm actions/create-ata.ts",
-    "create-ata:instruction": "node --loader ts-node/esm instructions/create-ata.ts",
-    "compress:action": "node --loader ts-node/esm actions/compress.ts",
-    "compress:batch": "node --loader ts-node/esm actions/compress-batch.ts",
-    "decompress:action": "node --loader ts-node/esm actions/decompress.ts",
-    "decompress:with-token-pool": "node --loader ts-node/esm actions/decompress-with-token-pool.ts",
-    "wrap:action": "node --loader ts-node/esm actions/wrap.ts",
-    "wrap:instruction": "node --loader ts-node/esm instructions/wrap.ts",
-    "unwrap:action": "node --loader ts-node/esm actions/unwrap.ts",
-    "unwrap:instruction": "node --loader ts-node/esm instructions/unwrap.ts",
-    "load-ata:action": "node --loader ts-node/esm actions/load-ata.ts",
-    "load-ata:instruction": "node --loader ts-node/esm instructions/load-ata.ts",
-    "delegate:approve": "node --loader ts-node/esm actions/delegate-approve.ts",
-    "delegate:revoke": "node --loader ts-node/esm actions/delegate-revoke.ts",
-    "merge-accounts": "node --loader ts-node/esm actions/merge-token-accounts.ts"
-  },
-  "dependencies": {
-    "@lightprotocol/compressed-token": "file:../light-protocol/js/compressed-token",
-    "@lightprotocol/stateless.js": "file:../light-protocol/js/stateless.js",
-    "@solana/spl-token": "^0.4.13",
-    "@solana/web3.js": "1.98.4",
-    "dotenv": "^16.5.0"
-  },
-  "devDependencies": {
-    "@types/node": "^20.0.0",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.0.0"
-  }
+    "name": "light-token-cookbook",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "Working examples for light-token operations on Solana devnet",
+    "scripts": {
+        "create-mint:action": "ts-node-esm actions/create-mint.ts",
+        "create-mint:instruction": "ts-node-esm instructions/create-mint.ts",
+        "mint-to:action": "ts-node-esm actions/mint-to.ts",
+        "mint-to:instruction": "ts-node-esm instructions/mint-to.ts",
+        "transfer-interface:action": "ts-node-esm actions/transfer-interface.ts",
+        "transfer-interface:instruction": "ts-node-esm instructions/transfer-interface.ts",
+        "create-ata:action": "ts-node-esm actions/create-ata.ts",
+        "create-ata:instruction": "ts-node-esm instructions/create-ata.ts",
+        "compress:action": "ts-node-esm actions/compress.ts",
+        "compress:batch": "ts-node-esm actions/compress-batch.ts",
+        "decompress:action": "ts-node-esm actions/decompress.ts",
+        "decompress:with-token-pool": "ts-node-esm actions/decompress-with-token-pool.ts",
+        "wrap:action": "ts-node-esm actions/wrap.ts",
+        "wrap:instruction": "ts-node-esm instructions/wrap.ts",
+        "unwrap:action": "ts-node-esm actions/unwrap.ts",
+        "unwrap:instruction": "ts-node-esm instructions/unwrap.ts",
+        "load-ata:action": "ts-node-esm actions/load-ata.ts",
+        "load-ata:instruction": "ts-node-esm instructions/load-ata.ts",
+        "delegate:approve": "ts-node-esm actions/delegate-approve.ts",
+        "delegate:revoke": "ts-node-esm actions/delegate-revoke.ts",
+        "merge-accounts": "ts-node-esm actions/merge-token-accounts.ts"
+    },
+    "dependencies": {
+        "@lightprotocol/compressed-token": "^0.22.1-alpha",
+        "@lightprotocol/stateless.js": "^0.22.1-alpha",
+        "@solana/spl-token": "^0.4.13",
+        "@solana/web3.js": "1.98.4",
+        "dotenv": "^16.5.0"
+    },
+    "devDependencies": {
+        "@types/node": "^20.0.0",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.0.0"
+    }
 }
