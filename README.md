@@ -1,4 +1,30 @@
-# Examples-light-token
+# Light Token Examples
+
+## Setup
+
+```bash
+cp .env.example .env # ...and set RPC_URL
+npm install
+```
+
+## Run
+
+From repo root:
+
+```bash
+# quickstart
+npm run quickstart
+
+# cookbook (local)
+npm run cookbook create-mint:action
+npm run cookbook compress:action
+# ... see cookbook/package.json for more
+
+# payments
+npm run toolkit:payments send-and-receive
+```
+
+Cookbook examples use local test-validator (install via `npm i -g @lightprotocol/zk-compression-cli@alpha`, then run `light test-validator`).
 
 ## Quickstart
 
