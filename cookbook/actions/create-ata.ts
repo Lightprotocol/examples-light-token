@@ -1,52 +1,29 @@
 import "dotenv/config";
 import { Keypair } from "@solana/web3.js";
-import { createRpc, featureFlags, VERSION } from "@lightprotocol/stateless.js";
+import { createRpc } from "@lightprotocol/stateless.js";
 import {
     createMintInterface,
     createAtaInterface,
-    getAssociatedTokenAddressInterface,
 } from "@lightprotocol/compressed-token";
+import { homedir } from "os";
+import { readFileSync } from "fs";
 
-featureFlags.version = VERSION.V2;
+const RPC_URL = `https://devnet.helius-rpc.com?api-key=${process.env.API_KEY!}`;
+const payer = Keypair.fromSecretKey(
+    new Uint8Array(
+        JSON.parse(readFileSync(`${homedir()}/.config/solana/id.json`, "utf8"))
+    )
+);
 
 async function main() {
-    // 1. Setup RPC and fund payer
-    const rpc = createRpc();
-    const payer = Keypair.generate();
-    const airdropSig = await rpc.requestAirdrop(payer.publicKey, 10e9);
-    await rpc.confirmTransaction(airdropSig, "confirmed");
-    console.log("Payer:", payer.publicKey.toBase58());
+    const rpc = createRpc(RPC_URL);
 
-    // 2. Create a light-mint
-    const mintSigner = Keypair.generate();
-    const { mint } = await createMintInterface(
-        rpc,
-        payer,
-        payer, // mintAuthority
-        null, // freezeAuthority
-        9, // decimals
-        mintSigner,
-    );
+    const { mint } = await createMintInterface(rpc, payer, payer, null, 9);
     console.log("Mint:", mint.toBase58());
 
-    // 3. Create associated token account for owner
     const owner = Keypair.generate();
-    const txSignature = await createAtaInterface(
-        rpc,
-        payer,
-        mint,
-        owner.publicKey,
-    );
-    console.log("ATA created for:", owner.publicKey.toBase58());
-    console.log("Transaction:", txSignature);
-
-    // 4. Derive the ATA address
-    const ata = getAssociatedTokenAddressInterface(mint, owner.publicKey);
-    console.log("ATA address:", ata.toBase58());
+    const ata = await createAtaInterface(rpc, payer, mint, owner.publicKey);
+    console.log("ATA:", ata.toBase58());
 }
 
-main().catch((err) => {
-    console.error("Error:", err);
-    if (err.logs) console.error("Logs:", err.logs);
-    process.exit(1);
-});
+main().catch(console.error);

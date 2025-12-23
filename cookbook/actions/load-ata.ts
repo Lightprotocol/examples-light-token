@@ -7,58 +7,35 @@ import {
     loadAta,
     getAssociatedTokenAddressInterface,
 } from "@lightprotocol/compressed-token";
+import { homedir } from "os";
+import { readFileSync } from "fs";
+
+const RPC_URL = `https://devnet.helius-rpc.com?api-key=${process.env.API_KEY!}`;
+const payer = Keypair.fromSecretKey(
+    new Uint8Array(
+        JSON.parse(readFileSync(`${homedir()}/.config/solana/id.json`, "utf8"))
+    )
+);
 
 async function main() {
-    // 1. Setup RPC and fund accounts
-    const rpc = createRpc();
-    const payer = Keypair.generate();
-    const airdropSig = await rpc.requestAirdrop(payer.publicKey, 10e9);
-    await rpc.confirmTransaction(airdropSig, "confirmed");
-    console.log("Payer:", payer.publicKey.toBase58());
+    const rpc = createRpc(RPC_URL);
 
-    const owner = Keypair.generate();
-    const airdropSig2 = await rpc.requestAirdrop(owner.publicKey, 1e9);
-    await rpc.confirmTransaction(airdropSig2, "confirmed");
-
-    // 2. Create mint and mint compressed tokens (cold)
-    const mintAuthority = Keypair.generate();
-    const mintKeypair = Keypair.generate();
-    const { mint } = await createMint(
-        rpc,
-        payer,
-        mintAuthority.publicKey,
-        9,
-        mintKeypair,
-    );
+    const { mint } = await createMint(rpc, payer, payer.publicKey, 9);
     console.log("Mint:", mint.toBase58());
 
-    await mintTo(rpc, payer, mint, owner.publicKey, mintAuthority, bn(1000));
-    console.log("Minted 1000 compressed tokens (cold)");
+    await mintTo(rpc, payer, mint, payer.publicKey, payer, bn(1000));
 
-    // 3. Get c-token ATA address
-    const ctokenAta = getAssociatedTokenAddressInterface(mint, owner.publicKey);
-    console.log("c-token ATA:", ctokenAta.toBase58());
+    const ctokenAta = getAssociatedTokenAddressInterface(mint, payer.publicKey);
 
-    // 4. Load compressed tokens to hot balance
-    // Creates ATA if needed, returns null if nothing to load
-    const signature = await loadAta(
-        rpc,
-        ctokenAta, // c-token ATA address
-        owner, // owner (signer)
-        mint,
-        payer, // optional: fee payer
-    );
+    // Load compressed tokens (cold) to hot balance, creates ATA if needed
+    const signature = await loadAta(rpc, ctokenAta, payer, mint, payer);
 
     if (signature) {
         console.log("Loaded tokens to hot balance");
-        console.log("Transaction:", signature);
+        console.log("Tx:", signature);
     } else {
         console.log("Nothing to load");
     }
 }
 
-main().catch((err) => {
-    console.error("Error:", err);
-    if (err.logs) console.error("Logs:", err.logs);
-    process.exit(1);
-});
+main().catch(console.error);

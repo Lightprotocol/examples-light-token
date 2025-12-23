@@ -16,88 +16,59 @@ import {
 } from "@lightprotocol/compressed-token";
 import { createUnwrapInstruction } from "@lightprotocol/compressed-token/unified";
 import { createAssociatedTokenAccount } from "@solana/spl-token";
+import { homedir } from "os";
+import { readFileSync } from "fs";
+
+const RPC_URL = `https://devnet.helius-rpc.com?api-key=${process.env.API_KEY!}`;
+const payer = Keypair.fromSecretKey(
+    new Uint8Array(
+        JSON.parse(readFileSync(`${homedir()}/.config/solana/id.json`, "utf8"))
+    )
+);
 
 async function main() {
-    // 1. Setup RPC and fund accounts
-    const rpc = createRpc();
-    const payer = Keypair.generate();
-    const airdropSig = await rpc.requestAirdrop(payer.publicKey, 10e9);
-    await rpc.confirmTransaction(airdropSig, "confirmed");
-    console.log("Payer:", payer.publicKey.toBase58());
+    const rpc = createRpc(RPC_URL);
 
-    const owner = Keypair.generate();
-    const airdropSig2 = await rpc.requestAirdrop(owner.publicKey, 1e9);
-    await rpc.confirmTransaction(airdropSig2, "confirmed");
-
-    // 2. Create SPL mint with token pool
-    const mintAuthority = Keypair.generate();
-    const mintKeypair = Keypair.generate();
-    const { mint } = await createMint(
-        rpc,
-        payer,
-        mintAuthority.publicKey,
-        9,
-        mintKeypair,
-    );
+    const { mint } = await createMint(rpc, payer, payer.publicKey, 9);
     console.log("Mint:", mint.toBase58());
 
-    // 3. Mint compressed tokens to owner
-    await mintTo(rpc, payer, mint, owner.publicKey, mintAuthority, bn(1000));
-    console.log("Minted 1000 compressed tokens");
+    await mintTo(rpc, payer, mint, payer.publicKey, payer, bn(1000));
 
-    // 4. Load compressed tokens to c-token ATA (hot balance)
-    const ctokenAta = getAssociatedTokenAddressInterface(mint, owner.publicKey);
-    await loadAta(rpc, ctokenAta, owner, mint, payer);
-    console.log("Loaded compressed tokens to c-token ATA");
+    const ctokenAta = getAssociatedTokenAddressInterface(mint, payer.publicKey);
+    await loadAta(rpc, ctokenAta, payer, mint, payer);
 
-    // 5. Create destination SPL ATA
-    const splAta = await createAssociatedTokenAccount(
-        rpc,
-        payer,
-        mint,
-        owner.publicKey,
-    );
-    console.log("SPL ATA:", splAta.toBase58());
+    const splAta = await createAssociatedTokenAccount(rpc, payer, mint, payer.publicKey);
 
-    // 6. Get SPL interface info for the mint
     const splInterfaceInfos = await getSplInterfaceInfos(rpc, mint);
-    const splInterfaceInfo = splInterfaceInfos.find(
-        (info) => info.isInitialized,
-    );
+    const splInterfaceInfo = splInterfaceInfos.find((info) => info.isInitialized);
 
     if (!splInterfaceInfo) {
         throw new Error("No SPL interface found");
     }
 
-    // 7. Create unwrap instruction
     const ix = createUnwrapInstruction(
-        ctokenAta, // source: c-token ATA
-        splAta, // destination: SPL token account
-        owner.publicKey, // owner of source account
+        ctokenAta,
+        splAta,
+        payer.publicKey,
         mint,
-        bn(500), // amount to unwrap
-        splInterfaceInfo, // SPL interface info
-        payer.publicKey, // fee payer
+        bn(500),
+        splInterfaceInfo,
+        payer.publicKey
     );
 
-    // 8. Build, sign, and send transaction
     const { blockhash } = await rpc.getLatestBlockhash();
-    const additionalSigners = dedupeSigner(payer, [owner]);
+    const additionalSigners = dedupeSigner(payer, [payer]);
 
     const tx = buildAndSignTx(
         [ComputeBudgetProgram.setComputeUnitLimit({ units: 200_000 }), ix],
         payer,
         blockhash,
-        additionalSigners,
+        additionalSigners
     );
 
     const signature = await sendAndConfirmTx(rpc, tx);
-    console.log("Unwrapped 500 tokens to SPL ATA");
-    console.log("Transaction:", signature);
+    console.log("Unwrapped 500 tokens");
+    console.log("Tx:", signature);
 }
 
-main().catch((err) => {
-    console.error("Error:", err);
-    if (err.logs) console.error("Logs:", err.logs);
-    process.exit(1);
-});
+main().catch(console.error);

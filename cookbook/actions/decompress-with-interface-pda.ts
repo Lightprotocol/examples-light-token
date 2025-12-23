@@ -5,6 +5,10 @@ import {
     createMint,
     mintTo,
     decompress,
+    getTokenPoolInfos,
+    selectTokenPoolInfosForDecompression,
+    selectSplInterfaceInfosForDecompression,
+    getSplInterfaceInfos,
 } from "@lightprotocol/compressed-token";
 import { createAssociatedTokenAccount } from "@solana/spl-token";
 import { homedir } from "os";
@@ -21,7 +25,6 @@ async function main() {
     const rpc = createRpc(RPC_URL);
 
     const { mint } = await createMint(rpc, payer, payer.publicKey, 9);
-    console.log("Mint:", mint.toBase58());
 
     await mintTo(rpc, payer, mint, payer.publicKey, payer, bn(1000));
 
@@ -32,16 +35,25 @@ async function main() {
         payer.publicKey
     );
 
+    // Get and select Interface Info for decompression
+    const amount = bn(500);
+    const splInterfaceInfos = await getSplInterfaceInfos(rpc, mint);
+    const splInterfaceInfo = selectSplInterfaceInfosForDecompression(
+        splInterfaceInfos,
+        amount
+    );
+
     const signature = await decompress(
         rpc,
         payer,
         mint,
-        bn(500),
+        amount,
         payer,
-        splAta
+        splAta,
+        splInterfaceInfo
     );
 
-    console.log("Decompressed 500 tokens to SPL ATA");
+    console.log(`Decompressed ${amount.toString()} tokens`);
     console.log("Tx:", signature);
 }
 

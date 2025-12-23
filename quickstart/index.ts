@@ -5,7 +5,6 @@ import {
     mintToInterface,
     createMintInterface,
     getOrCreateAtaInterface,
-    getAccountInterface,
     getAtaInterface,
 } from "@lightprotocol/compressed-token";
 import { homedir } from "os";

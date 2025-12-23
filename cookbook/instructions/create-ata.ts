@@ -4,8 +4,6 @@ import {
     createRpc,
     buildAndSignTx,
     sendAndConfirmTx,
-    featureFlags,
-    VERSION,
     CTOKEN_PROGRAM_ID,
 } from "@lightprotocol/stateless.js";
 import {
@@ -13,62 +11,43 @@ import {
     createAssociatedTokenAccountInterfaceInstruction,
     getAssociatedTokenAddressInterface,
 } from "@lightprotocol/compressed-token";
+import { homedir } from "os";
+import { readFileSync } from "fs";
 
-featureFlags.version = VERSION.V2;
+const RPC_URL = `https://devnet.helius-rpc.com?api-key=${process.env.API_KEY!}`;
+const payer = Keypair.fromSecretKey(
+    new Uint8Array(
+        JSON.parse(readFileSync(`${homedir()}/.config/solana/id.json`, "utf8"))
+    )
+);
 
 async function main() {
-    // 1. Setup RPC and fund payer
-    const rpc = createRpc();
-    const payer = Keypair.generate();
-    const airdropSig = await rpc.requestAirdrop(payer.publicKey, 10e9);
-    await rpc.confirmTransaction(airdropSig, "confirmed");
-    console.log("Payer:", payer.publicKey.toBase58());
+    const rpc = createRpc(RPC_URL);
 
-    // 2. Create a light-mint
-    const mintSigner = Keypair.generate();
-    const { mint } = await createMintInterface(
-        rpc,
-        payer,
-        payer, // mintAuthority
-        null, // freezeAuthority
-        9, // decimals
-        mintSigner,
-    );
+    const { mint } = await createMintInterface(rpc, payer, payer, null, 9);
     console.log("Mint:", mint.toBase58());
 
-    // 3. Derive the ATA address
     const owner = Keypair.generate();
-    const associatedToken = getAssociatedTokenAddressInterface(
-        mint,
-        owner.publicKey,
-    );
-    console.log("Owner:", owner.publicKey.toBase58());
-    console.log("ATA address:", associatedToken.toBase58());
+    const associatedToken = getAssociatedTokenAddressInterface(mint, owner.publicKey);
 
-    // 4. Create the instruction
     const ix = createAssociatedTokenAccountInterfaceInstruction(
-        payer.publicKey, // payer
-        associatedToken, // associatedToken
-        owner.publicKey, // owner
-        mint, // mint
-        CTOKEN_PROGRAM_ID, // programId (cToken)
+        payer.publicKey,
+        associatedToken,
+        owner.publicKey,
+        mint,
+        CTOKEN_PROGRAM_ID
     );
 
-    // 5. Build, sign, and send transaction
     const { blockhash } = await rpc.getLatestBlockhash();
     const tx = buildAndSignTx(
         [ComputeBudgetProgram.setComputeUnitLimit({ units: 100_000 }), ix],
         payer,
-        blockhash,
+        blockhash
     );
     const signature = await sendAndConfirmTx(rpc, tx);
 
-    console.log("ATA created");
-    console.log("Transaction:", signature);
+    console.log("ATA:", associatedToken.toBase58());
+    console.log("Tx:", signature);
 }
 
-main().catch((err) => {
-    console.error("Error:", err);
-    if (err.logs) console.error("Logs:", err.logs);
-    process.exit(1);
-});
+main().catch(console.error);
