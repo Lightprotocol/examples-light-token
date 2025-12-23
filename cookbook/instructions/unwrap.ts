@@ -4,7 +4,6 @@ import {
     createRpc,
     buildAndSignTx,
     sendAndConfirmTx,
-    dedupeSigner,
     bn,
 } from "@lightprotocol/stateless.js";
 import {
@@ -26,25 +25,30 @@ const payer = Keypair.fromSecretKey(
     )
 );
 
-async function main() {
+(async function () {
     const rpc = createRpc(RPC_URL);
 
+    // Setup: Get compressed tokens (cold storage)
     const { mint } = await createMint(rpc, payer, payer.publicKey, 9);
-    console.log("Mint:", mint.toBase58());
-
     await mintTo(rpc, payer, mint, payer.publicKey, payer, bn(1000));
 
+    // Load compressed tokens to hot balance, then create unwrap instruction
     const ctokenAta = getAssociatedTokenAddressInterface(mint, payer.publicKey);
     await loadAta(rpc, ctokenAta, payer, mint, payer);
 
-    const splAta = await createAssociatedTokenAccount(rpc, payer, mint, payer.publicKey);
+    const splAta = await createAssociatedTokenAccount(
+        rpc,
+        payer,
+        mint,
+        payer.publicKey
+    );
 
     const splInterfaceInfos = await getSplInterfaceInfos(rpc, mint);
-    const splInterfaceInfo = splInterfaceInfos.find((info) => info.isInitialized);
+    const splInterfaceInfo = splInterfaceInfos.find(
+        (info) => info.isInitialized
+    );
 
-    if (!splInterfaceInfo) {
-        throw new Error("No SPL interface found");
-    }
+    if (!splInterfaceInfo) throw new Error("No SPL interface found");
 
     const ix = createUnwrapInstruction(
         ctokenAta,
@@ -57,18 +61,12 @@ async function main() {
     );
 
     const { blockhash } = await rpc.getLatestBlockhash();
-    const additionalSigners = dedupeSigner(payer, [payer]);
-
     const tx = buildAndSignTx(
         [ComputeBudgetProgram.setComputeUnitLimit({ units: 200_000 }), ix],
         payer,
-        blockhash,
-        additionalSigners
+        blockhash
     );
-
     const signature = await sendAndConfirmTx(rpc, tx);
-    console.log("Unwrapped 500 tokens");
-    console.log("Tx:", signature);
-}
 
-main().catch(console.error);
+    console.log("Tx:", signature);
+})();

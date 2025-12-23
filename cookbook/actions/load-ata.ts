@@ -17,25 +17,16 @@ const payer = Keypair.fromSecretKey(
     )
 );
 
-async function main() {
+(async function () {
     const rpc = createRpc(RPC_URL);
 
+    // Setup: Get compressed tokens (cold storage)
     const { mint } = await createMint(rpc, payer, payer.publicKey, 9);
-    console.log("Mint:", mint.toBase58());
-
     await mintTo(rpc, payer, mint, payer.publicKey, payer, bn(1000));
 
+    // Load compressed tokens to hot balance
     const ctokenAta = getAssociatedTokenAddressInterface(mint, payer.publicKey);
+    const tx = await loadAta(rpc, ctokenAta, payer, mint, payer);
 
-    // Load compressed tokens (cold) to hot balance, creates ATA if needed
-    const signature = await loadAta(rpc, ctokenAta, payer, mint, payer);
-
-    if (signature) {
-        console.log("Loaded tokens to hot balance");
-        console.log("Tx:", signature);
-    } else {
-        console.log("Nothing to load");
-    }
-}
-
-main().catch(console.error);
+    console.log("Tx:", tx);
+})();

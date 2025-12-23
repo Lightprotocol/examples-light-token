@@ -1,12 +1,7 @@
 import "dotenv/config";
 import { Keypair } from "@solana/web3.js";
 import { createRpc, bn } from "@lightprotocol/stateless.js";
-import {
-    createMint,
-    mintTo,
-    decompress,
-    compress,
-} from "@lightprotocol/compressed-token";
+import { createMint, mintTo, decompress, compress } from "@lightprotocol/compressed-token";
 import { createAssociatedTokenAccount } from "@solana/spl-token";
 import { homedir } from "os";
 import { readFileSync } from "fs";
@@ -18,36 +13,18 @@ const payer = Keypair.fromSecretKey(
     )
 );
 
-async function main() {
+(async function () {
     const rpc = createRpc(RPC_URL);
 
+    // Setup: Get SPL tokens (needed to compress)
     const { mint } = await createMint(rpc, payer, payer.publicKey, 9);
-    console.log("Mint:", mint.toBase58());
-
-    const splAta = await createAssociatedTokenAccount(
-        rpc,
-        payer,
-        mint,
-        payer.publicKey
-    );
-
-    // Fund SPL ATA: mint compressed, then decompress
+    const splAta = await createAssociatedTokenAccount(rpc, payer, mint, payer.publicKey);
     await mintTo(rpc, payer, mint, payer.publicKey, payer, bn(1000));
     await decompress(rpc, payer, mint, bn(1000), payer, splAta);
 
+    // Compress SPL tokens to cold storage
     const recipient = Keypair.generate();
-    const signature = await compress(
-        rpc,
-        payer,
-        mint,
-        bn(500),
-        payer,
-        splAta,
-        recipient.publicKey
-    );
+    const tx = await compress(rpc, payer, mint, bn(500), payer, splAta, recipient.publicKey);
 
-    console.log("Compressed 500 tokens to:", recipient.publicKey.toBase58());
-    console.log("Tx:", signature);
-}
-
-main().catch(console.error);
+    console.log("Tx:", tx);
+})();

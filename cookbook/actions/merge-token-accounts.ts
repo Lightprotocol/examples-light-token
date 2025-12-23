@@ -1,7 +1,11 @@
 import "dotenv/config";
 import { Keypair } from "@solana/web3.js";
 import { createRpc, bn } from "@lightprotocol/stateless.js";
-import { createMint, mintTo, mergeTokenAccounts } from "@lightprotocol/compressed-token";
+import {
+    createMint,
+    mintTo,
+    mergeTokenAccounts,
+} from "@lightprotocol/compressed-token";
 import { homedir } from "os";
 import { readFileSync } from "fs";
 
@@ -12,26 +16,17 @@ const payer = Keypair.fromSecretKey(
     )
 );
 
-async function main() {
+(async function () {
     const rpc = createRpc(RPC_URL);
 
+    // Setup: Create multiple compressed token accounts
     const { mint } = await createMint(rpc, payer, payer.publicKey, 9);
-    console.log("Mint:", mint.toBase58());
-
-    // Mint multiple times to create multiple compressed accounts
     for (let i = 0; i < 5; i++) {
         await mintTo(rpc, payer, mint, payer.publicKey, payer, bn(100));
     }
 
-    const accountsBefore = await rpc.getCompressedTokenAccountsByOwner(payer.publicKey, { mint });
-    console.log("Accounts before merge:", accountsBefore.items.length);
+    // Merge multiple accounts into one
+    const tx = await mergeTokenAccounts(rpc, payer, mint, payer);
 
-    const signature = await mergeTokenAccounts(rpc, payer, mint, payer);
-
-    console.log("Tx:", signature);
-
-    const accountsAfter = await rpc.getCompressedTokenAccountsByOwner(payer.publicKey, { mint });
-    console.log("Accounts after merge:", accountsAfter.items.length);
-}
-
-main().catch(console.error);
+    console.log("Tx:", tx);
+})();

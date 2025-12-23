@@ -15,15 +15,13 @@ const payer = Keypair.fromSecretKey(
     )
 );
 
-async function main() {
+(async function () {
     const rpc = createRpc(RPC_URL);
 
     const { mint } = await createMintInterface(rpc, payer, payer, null, 9);
-    console.log("Mint:", mint.toBase58());
 
     const owner = Keypair.generate();
     const ata = await createAtaInterface(rpc, payer, mint, owner.publicKey);
-    console.log("ATA:", ata.toBase58());
-}
 
-main().catch(console.error);
+    console.log("ATA:", ata.toBase58());
+})();

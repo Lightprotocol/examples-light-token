@@ -1,11 +1,6 @@
 import "dotenv/config";
 import { Keypair, ComputeBudgetProgram } from "@solana/web3.js";
-import {
-    createRpc,
-    buildAndSignTx,
-    sendAndConfirmTx,
-    CTOKEN_PROGRAM_ID,
-} from "@lightprotocol/stateless.js";
+import { createRpc, buildAndSignTx, sendAndConfirmTx, CTOKEN_PROGRAM_ID } from "@lightprotocol/stateless.js";
 import {
     createMintInterface,
     createAssociatedTokenAccountInterfaceInstruction,
@@ -21,11 +16,10 @@ const payer = Keypair.fromSecretKey(
     )
 );
 
-async function main() {
+(async function () {
     const rpc = createRpc(RPC_URL);
 
     const { mint } = await createMintInterface(rpc, payer, payer, null, 9);
-    console.log("Mint:", mint.toBase58());
 
     const owner = Keypair.generate();
     const associatedToken = getAssociatedTokenAddressInterface(mint, owner.publicKey);
@@ -48,6 +42,4 @@ async function main() {
 
     console.log("ATA:", associatedToken.toBase58());
     console.log("Tx:", signature);
-}
-
-main().catch(console.error);
+})();

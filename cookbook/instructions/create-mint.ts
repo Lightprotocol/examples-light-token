@@ -29,13 +29,12 @@ const payer = Keypair.fromSecretKey(
     )
 );
 
-async function main() {
+(async function () {
     const rpc = createRpc(RPC_URL);
 
     const mintSigner = Keypair.generate();
     const addressTreeInfo = getBatchAddressTreeInfo();
     const stateTreeInfo = selectStateTreeInfo(await rpc.getStateTreeInfos());
-
     const [mintPda] = findMintAddress(mintSigner.publicKey);
 
     const validityProof = await rpc.getValidityProofV2(
@@ -47,8 +46,8 @@ async function main() {
     const ix = createMintInstruction(
         mintSigner.publicKey,
         9,
-        payer.publicKey, // mintAuthority
-        null, // freezeAuthority
+        payer.publicKey,
+        null,
         payer.publicKey,
         validityProof,
         addressTreeInfo,
@@ -67,6 +66,4 @@ async function main() {
 
     console.log("Mint:", mintPda.toBase58());
     console.log("Tx:", signature);
-}
-
-main().catch(console.error);
+})();

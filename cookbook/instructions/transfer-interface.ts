@@ -1,10 +1,6 @@
 import "dotenv/config";
 import { Keypair, ComputeBudgetProgram } from "@solana/web3.js";
-import {
-    createRpc,
-    buildAndSignTx,
-    sendAndConfirmTx,
-} from "@lightprotocol/stateless.js";
+import { createRpc, buildAndSignTx, sendAndConfirmTx } from "@lightprotocol/stateless.js";
 import {
     createMintInterface,
     createAtaInterface,
@@ -22,11 +18,10 @@ const payer = Keypair.fromSecretKey(
     )
 );
 
-async function main() {
+(async function () {
     const rpc = createRpc(RPC_URL);
 
     const { mint } = await createMintInterface(rpc, payer, payer, null, 9);
-    console.log("Mint:", mint.toBase58());
 
     const sender = Keypair.generate();
     await createAtaInterface(rpc, payer, mint, sender.publicKey);
@@ -48,8 +43,5 @@ async function main() {
     );
     const signature = await sendAndConfirmTx(rpc, tx);
 
-    console.log("Transferred 0.5 tokens");
     console.log("Tx:", signature);
-}
-
-main().catch(console.error);
+})();

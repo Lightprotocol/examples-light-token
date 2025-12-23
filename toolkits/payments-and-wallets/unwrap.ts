@@ -3,65 +3,35 @@ import { Keypair } from "@solana/web3.js";
 import { createRpc, bn } from "@lightprotocol/stateless.js";
 import { createMint, mintTo } from "@lightprotocol/compressed-token";
 import {
-    getOrCreateAtaInterface,
     unwrap,
+    getOrCreateAtaInterface,
 } from "@lightprotocol/compressed-token/unified";
-import { createAssociatedTokenAccount, getAccount } from "@solana/spl-token";
+import { createAssociatedTokenAccount } from "@solana/spl-token";
+import { homedir } from "os";
+import { readFileSync } from "fs";
 
-async function main() {
-    const rpc = createRpc();
+const RPC_URL = `https://devnet.helius-rpc.com?api-key=${process.env.API_KEY!}`;
+const payer = Keypair.fromSecretKey(
+    new Uint8Array(
+        JSON.parse(readFileSync(`${homedir()}/.config/solana/id.json`, "utf8"))
+    )
+);
 
-    // Setup
-    const payer = Keypair.generate();
-    const airdropSig = await rpc.requestAirdrop(payer.publicKey, 10e9);
-    await rpc.confirmTransaction(airdropSig, "confirmed");
+(async function () {
+    const rpc = createRpc(RPC_URL);
 
-    const owner = Keypair.generate();
-    const airdropSig2 = await rpc.requestAirdrop(owner.publicKey, 1e9);
-    await rpc.confirmTransaction(airdropSig2, "confirmed");
+    const { mint } = await createMint(rpc, payer, payer.publicKey, 9);
+    await mintTo(rpc, payer, mint, payer.publicKey, payer, bn(1000));
+    await getOrCreateAtaInterface(rpc, payer, mint, payer);
 
-    // Create test mint
-    const mintAuthority = Keypair.generate();
-    const mintKeypair = Keypair.generate();
-    const { mint } = await createMint(
-        rpc,
-        payer,
-        mintAuthority.publicKey,
-        9,
-        mintKeypair,
-    );
-    console.log("Mint:", mint.toBase58());
-
-    // Mint and load to c-token ATA
-    await mintTo(rpc, payer, mint, owner.publicKey, mintAuthority, bn(1000));
-    const ctokenAccount = await getOrCreateAtaInterface(
-        rpc,
-        payer,
-        mint,
-        owner,
-    );
-    console.log("C-token ATA:", ctokenAccount.parsed.address.toBase58());
-    console.log("C-token balance:", ctokenAccount.parsed.amount.toString());
-
-    // Create destination SPL ATA (must exist before unwrap)
     const splAta = await createAssociatedTokenAccount(
         rpc,
         payer,
         mint,
-        owner.publicKey,
+        payer.publicKey
     );
-    console.log("\nSPL ATA:", splAta.toBase58());
 
-    // === UNWRAP: c-token → SPL ===
-    // Off-ramp for CEX withdrawal
-    const signature = await unwrap(rpc, payer, splAta, owner, mint, bn(500));
+    const tx = await unwrap(rpc, payer, splAta, payer, mint, bn(500));
 
-    console.log("\n=== Unwrapped 500 tokens ===");
-    console.log("Transaction:", signature);
-
-    // Check SPL balance
-    const splBalance = await getAccount(rpc, splAta);
-    console.log("\nSPL balance (ready for CEX):", splBalance.amount.toString());
-}
-
-main().catch(console.error);
+    console.log("Tx:", tx);
+})();

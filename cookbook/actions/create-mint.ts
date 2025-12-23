@@ -1,10 +1,7 @@
 import "dotenv/config";
 import { Keypair } from "@solana/web3.js";
 import { createRpc } from "@lightprotocol/stateless.js";
-import {
-    createMintInterface,
-    createTokenMetadata,
-} from "@lightprotocol/compressed-token";
+import { createMintInterface, createTokenMetadata } from "@lightprotocol/compressed-token";
 import { homedir } from "os";
 import { readFileSync } from "fs";
 
@@ -15,27 +12,21 @@ const payer = Keypair.fromSecretKey(
     )
 );
 
-async function main() {
+(async function () {
     const rpc = createRpc(RPC_URL);
 
     const { mint, transactionSignature } = await createMintInterface(
         rpc,
         payer,
-        payer, // mintAuthority
-        null, // freezeAuthority
+        payer,
+        null,
         9,
-        undefined, // mintSigner
-        undefined, // confirmOptions
-        undefined, // programId
-        createTokenMetadata(
-            "Example Token",
-            "EXT",
-            "https://example.com/metadata.json"
-        )
+        undefined,
+        undefined,
+        undefined,
+        createTokenMetadata("Example Token", "EXT", "https://example.com/metadata.json")
     );
 
     console.log("Mint:", mint.toBase58());
     console.log("Tx:", transactionSignature);
-}
-
-main().catch(console.error);
+})();

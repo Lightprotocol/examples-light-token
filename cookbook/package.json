@@ -15,7 +15,6 @@
         "compress:action": "ts-node-esm actions/compress.ts",
         "compress:batch": "ts-node-esm actions/compress-batch.ts",
         "decompress:action": "ts-node-esm actions/decompress.ts",
-        "decompress:with-token-pool": "ts-node-esm actions/decompress-with-interface-pda.ts",
         "wrap:action": "ts-node-esm actions/wrap.ts",
         "wrap:instruction": "ts-node-esm instructions/wrap.ts",
         "unwrap:action": "ts-node-esm actions/unwrap.ts",

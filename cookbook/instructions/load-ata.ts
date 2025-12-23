@@ -1,18 +1,7 @@
 import "dotenv/config";
 import { Keypair, ComputeBudgetProgram } from "@solana/web3.js";
-import {
-    createRpc,
-    bn,
-    buildAndSignTx,
-    sendAndConfirmTx,
-    dedupeSigner,
-} from "@lightprotocol/stateless.js";
-import {
-    createMint,
-    mintTo,
-    createLoadAtaInstructions,
-    getAssociatedTokenAddressInterface,
-} from "@lightprotocol/compressed-token";
+import { createRpc, bn, buildAndSignTx, sendAndConfirmTx } from "@lightprotocol/stateless.js";
+import { createMint, mintTo, createLoadAtaInstructions, getAssociatedTokenAddressInterface } from "@lightprotocol/compressed-token";
 import { homedir } from "os";
 import { readFileSync } from "fs";
 
@@ -23,14 +12,14 @@ const payer = Keypair.fromSecretKey(
     )
 );
 
-async function main() {
+(async function () {
     const rpc = createRpc(RPC_URL);
 
+    // Setup: Get compressed tokens (cold storage)
     const { mint } = await createMint(rpc, payer, payer.publicKey, 9);
-    console.log("Mint:", mint.toBase58());
-
     await mintTo(rpc, payer, mint, payer.publicKey, payer, bn(1000));
 
+    // Create load instructions to move tokens from cold to hot balance
     const ctokenAta = getAssociatedTokenAddressInterface(mint, payer.publicKey);
 
     const ixs = await createLoadAtaInstructions(rpc, ctokenAta, payer.publicKey, mint, payer.publicKey);
@@ -41,18 +30,12 @@ async function main() {
     }
 
     const { blockhash } = await rpc.getLatestBlockhash();
-    const additionalSigners = dedupeSigner(payer, [payer]);
-
     const tx = buildAndSignTx(
         [ComputeBudgetProgram.setComputeUnitLimit({ units: 500_000 }), ...ixs],
         payer,
-        blockhash,
-        additionalSigners
+        blockhash
     );
-
     const signature = await sendAndConfirmTx(rpc, tx);
-    console.log("Loaded tokens to hot balance");
-    console.log("Tx:", signature);
-}
 
-main().catch(console.error);
+    console.log("Tx:", signature);
+})();

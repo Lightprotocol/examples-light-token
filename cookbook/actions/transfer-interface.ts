@@ -18,39 +18,21 @@ const payer = Keypair.fromSecretKey(
     )
 );
 
-async function main() {
+(async function () {
     const rpc = createRpc(RPC_URL);
 
     const { mint } = await createMintInterface(rpc, payer, payer, null, 9);
-    console.log("Mint:", mint.toBase58());
 
     const sender = Keypair.generate();
     await createAtaInterface(rpc, payer, mint, sender.publicKey);
-    const senderAta = getAssociatedTokenAddressInterface(
-        mint,
-        sender.publicKey
-    );
+    const senderAta = getAssociatedTokenAddressInterface(mint, sender.publicKey);
     await mintToInterface(rpc, payer, mint, senderAta, payer, 1_000_000_000);
 
     const recipient = Keypair.generate();
     await createAtaInterface(rpc, payer, mint, recipient.publicKey);
-    const recipientAta = getAssociatedTokenAddressInterface(
-        mint,
-        recipient.publicKey
-    );
+    const recipientAta = getAssociatedTokenAddressInterface(mint, recipient.publicKey);
 
-    const txSignature = await transferInterface(
-        rpc,
-        payer,
-        senderAta,
-        mint,
-        recipientAta,
-        sender,
-        500_000_000
-    );
+    const tx = await transferInterface(rpc, payer, senderAta, mint, recipientAta, sender, 500_000_000);
 
-    console.log("Transferred 0.5 tokens");
-    console.log("Tx:", txSignature);
-}
-
-main().catch(console.error);
+    console.log("Tx:", tx);
+})();

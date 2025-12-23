@@ -17,32 +17,21 @@ const payer = Keypair.fromSecretKey(
     )
 );
 
-async function main() {
+(async function () {
     const rpc = createRpc(RPC_URL);
 
+    // Setup: Get compressed tokens (cold storage)
     const { mint } = await createMint(rpc, payer, payer.publicKey, 9);
-    console.log("Mint:", mint.toBase58());
-
     await mintTo(rpc, payer, mint, payer.publicKey, payer, bn(1000));
 
+    // Decompress to SPL ATA
     const splAta = await createAssociatedTokenAccount(
         rpc,
         payer,
         mint,
         payer.publicKey
     );
+    const tx = await decompress(rpc, payer, mint, bn(500), payer, splAta);
 
-    const signature = await decompress(
-        rpc,
-        payer,
-        mint,
-        bn(500),
-        payer,
-        splAta
-    );
-
-    console.log("Decompressed 500 tokens to SPL ATA");
-    console.log("Tx:", signature);
-}
-
-main().catch(console.error);
+    console.log("Tx:", tx);
+})();
