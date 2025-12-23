@@ -4,8 +4,10 @@ import { createRpc } from "@lightprotocol/stateless.js";
 import {
     mintToInterface,
     createMintInterface,
+    getOrCreateAtaInterface,
+    getAccountInterface,
+    getAtaInterface,
 } from "@lightprotocol/compressed-token";
-import { getOrCreateAtaInterface } from "@lightprotocol/compressed-token/unified";
 import { homedir } from "os";
 import { readFileSync } from "fs";
 
@@ -20,11 +22,11 @@ const payer = Keypair.fromSecretKey(
 // Enable to use Devnet:
 dotenv.config();
 const RPC_URL = `https://devnet.helius-rpc.com?api-key=${process.env.API_KEY!}`;
-console.log("RPC_URL: ", RPC_URL);
+
 (async function () {
     const rpc = createRpc(RPC_URL);
 
-    // 1. create mint
+    // 1. create test mint
     const mintAuthority = payer;
     const { mint, transactionSignature } = await createMintInterface(
         rpc,
@@ -34,9 +36,9 @@ console.log("RPC_URL: ", RPC_URL);
         9
     );
 
-    // 2. get recipient
+    // 2. get recipient's associated token account
     const recipient = Keypair.generate();
-    const recipientAta = await getOrCreateAtaInterface(
+    let recipientAta = await getOrCreateAtaInterface(
         rpc,
         payer,
         mint,
@@ -51,6 +53,14 @@ console.log("RPC_URL: ", RPC_URL);
         recipientAta.parsed.address,
         payer,
         1e9
+    );
+
+    // 4. fetch state
+    recipientAta = await getAtaInterface(
+        rpc,
+        recipientAta.parsed.address,
+        recipient.publicKey,
+        mint
     );
 
     console.log(
