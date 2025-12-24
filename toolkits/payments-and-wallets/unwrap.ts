@@ -1,7 +1,12 @@
 import "dotenv/config";
 import { Keypair } from "@solana/web3.js";
 import { createRpc, bn } from "@lightprotocol/stateless.js";
-import { createMint, mintTo, approve } from "@lightprotocol/compressed-token";
+import { createMint, mintTo } from "@lightprotocol/compressed-token";
+import {
+    unwrap,
+    getOrCreateAtaInterface,
+} from "@lightprotocol/compressed-token/unified";
+import { createAssociatedTokenAccount } from "@solana/spl-token";
 import { homedir } from "os";
 import { readFileSync } from "fs";
 
@@ -15,20 +20,18 @@ const payer = Keypair.fromSecretKey(
 (async function () {
     const rpc = createRpc(RPC_URL);
 
-    // Setup: Get compressed tokens
     const { mint } = await createMint(rpc, payer, payer.publicKey, 9);
     await mintTo(rpc, payer, mint, payer.publicKey, payer, bn(1000));
+    await getOrCreateAtaInterface(rpc, payer, mint, payer);
 
-    // Approve delegation
-    const delegate = Keypair.generate();
-    const tx = await approve(
+    const splAta = await createAssociatedTokenAccount(
         rpc,
         payer,
         mint,
-        bn(500),
-        payer,
-        delegate.publicKey
+        payer.publicKey
     );
+
+    const tx = await unwrap(rpc, payer, splAta, payer, mint, bn(500));
 
     console.log("Tx:", tx);
 })();

@@ -34,29 +34,29 @@ End-to-end example: create a mint, token account, mint tokens, and transfer on d
 
 ## Cookbook
 
-Step-by-step recipes for light-token on localnet.
+Step-by-step recipes for light-token on Devnet/Localnet.
 
 ### [Actions](cookbook/actions/)
 
-- **[create-mint](cookbook/actions/create-mint.ts)** - Create a new light-token mint
-- **[create-ata](cookbook/actions/create-ata.ts)** - Create an associated light-token account
-- **[load-ata](cookbook/actions/load-ata.ts)** - Load a cold token account (compressed) to hot balance (light-token ata)
-- **[mint-to](cookbook/actions/mint-to.ts)** - Mint tokens to a light-account
-- **[transfer-interface](cookbook/actions/transfer-interface.ts)** - Transfer tokens between light-token, T22, and SPL token accounts.
-- **[wrap](cookbook/actions/wrap.ts)** - Wrap SPL to light-token
-- **[unwrap](cookbook/actions/unwrap.ts)** - Unwrap light-token to SPL for off-ramps and legacy integrations
+-   **[create-mint](cookbook/actions/create-mint.ts)** - Create a new light-token mint
+-   **[create-ata](cookbook/actions/create-ata.ts)** - Create an associated light-token account
+-   **[load-ata](cookbook/actions/load-ata.ts)** - Load a cold token account (compressed) to hot balance (light-token ata)
+-   **[mint-to](cookbook/actions/mint-to.ts)** - Mint tokens to a light-account
+-   **[transfer-interface](cookbook/actions/transfer-interface.ts)** - Transfer tokens between light-token, T22, and SPL token accounts.
+-   **[wrap](cookbook/actions/wrap.ts)** - Wrap SPL to light-token
+-   **[unwrap](cookbook/actions/unwrap.ts)** - Unwrap light-token to SPL for off-ramps and legacy integrations
 
 ### [Instructions](cookbook/instructions/)
 
 Low-level instruction builders:
 
-- **[create-mint](cookbook/instructions/create-mint.ts)** - Build create mint instruction
-- **[create-ata](cookbook/instructions/create-ata.ts)** - Build create ATA instruction
-- **[load-ata](cookbook/instructions/load-ata.ts)** - Build load ATA instruction
-- **[mint-to](cookbook/instructions/mint-to.ts)** - Build mint-to instruction
-- **[transfer-interface](cookbook/instructions/transfer-interface.ts)** - Build transfer interface instruction for transfers between light-token, T22, and SPL token accounts.
-- **[wrap](cookbook/instructions/wrap.ts)** - Build wrap instruction
-- **[unwrap](cookbook/instructions/unwrap.ts)** - Build unwrap instruction for off-ramps and legacy integrations
+-   **[create-mint](cookbook/instructions/create-mint.ts)** - Build create mint instruction
+-   **[create-ata](cookbook/instructions/create-ata.ts)** - Build create ATA instruction
+-   **[load-ata](cookbook/instructions/load-ata.ts)** - Build load ATA instruction
+-   **[mint-to](cookbook/instructions/mint-to.ts)** - Build mint-to instruction
+-   **[transfer-interface](cookbook/instructions/transfer-interface.ts)** - Build transfer interface instruction for transfers between light-token, T22, and SPL token accounts.
+-   **[wrap](cookbook/instructions/wrap.ts)** - Build wrap instruction
+-   **[unwrap](cookbook/instructions/unwrap.ts)** - Build unwrap instruction for off-ramps and legacy integrations
 
 ## Toolkits
 
@@ -64,11 +64,11 @@ Low-level instruction builders:
 
 Examples for wallet integrations and payment flows:
 
-- **[get-balance](toolkits/payments-and-wallets/get-balance.ts)** - Fetch token balances for light-token accounts
-- **[get-history](toolkits/payments-and-wallets/get-history.ts)** - Fetch transaction history for light-token accounts
-- **[send-and-receive](toolkits/payments-and-wallets/send-and-receive.ts)** - Send and receive light-tokens using the transfer interface
-- **[wrap-from-spl](toolkits/payments-and-wallets/wrap-from-spl.ts)** - Wrap SPL tokens to light-token
-- **[unwrap-to-spl](toolkits/payments-and-wallets/unwrap-to-spl.ts)** - Unwrap light-token to SPL for off-ramps and legacy integrations
+-   **[get-balance](toolkits/payments-and-wallets/get-balance.ts)** - Fetch token balances for light-token accounts
+-   **[get-history](toolkits/payments-and-wallets/get-history.ts)** - Fetch transaction history for light-token accounts
+-   **[send-and-receive](toolkits/payments-and-wallets/send-and-receive.ts)** - Send and receive light-tokens using the transfer interface
+-   **[wrap](toolkits/payments-and-wallets/wrap.ts)** - Wrap SPL tokens to light-token
+-   **[unwrap](toolkits/payments-and-wallets/unwrap.ts)** - Unwrap light-token to SPL for off-ramps and legacy integrations
 
 ### [Streaming Tokens](toolkits/streaming-tokens/)
 

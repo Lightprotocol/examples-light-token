@@ -1,23 +1,24 @@
 {
-  "name": "light-token-toolkit-payments",
-  "version": "1.0.0",
-  "description": "Light Token Payments Toolkit Examples",
-  "type": "module",
-  "scripts": {
-    "send-and-receive": "node --loader ts-node/esm send-and-receive.ts",
-    "get-balance": "node --loader ts-node/esm get-balance.ts",
-    "get-history": "node --loader ts-node/esm get-history.ts",
-    "wrap-from-spl": "node --loader ts-node/esm wrap-from-spl.ts",
-    "unwrap-to-spl": "node --loader ts-node/esm unwrap-to-spl.ts"
-  },
-  "dependencies": {
-    "@lightprotocol/compressed-token": "file:../../light-protocol/js/compressed-token",
-    "@lightprotocol/stateless.js": "file:../../light-protocol/js/stateless.js",
-    "@solana/spl-token": "^0.4.13",
-    "@solana/web3.js": "1.98.4"
-  },
-  "devDependencies": {
-    "ts-node": "^10.9.2",
-    "typescript": "^5.7.2"
-  }
+    "name": "light-token-toolkit-payments",
+    "version": "1.0.0",
+    "description": "Light Token Payments Toolkit Examples",
+    "type": "module",
+    "scripts": {
+        "send-and-receive": "ts-node-esm send-and-receive.ts",
+        "get-balance": "ts-node-esm get-balance.ts",
+        "get-history": "ts-node-esm get-history.ts",
+        "wrap": "ts-node-esm wrap.ts",
+        "unwrap": "ts-node-esm unwrap.ts"
+    },
+    "dependencies": {
+        "@lightprotocol/compressed-token": "^0.22.1-alpha",
+        "@lightprotocol/stateless.js": "^0.22.1-alpha",
+        "@solana/spl-token": "^0.4.13",
+        "@solana/web3.js": "1.98.4",
+        "dotenv": "^16.5.0"
+    },
+    "devDependencies": {
+        "ts-node": "^10.9.2",
+        "typescript": "^5.7.2"
+    }
 }

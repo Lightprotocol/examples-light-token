@@ -5,9 +5,10 @@ import {
     createMint,
     mintTo,
     decompress,
-    wrap,
-    getAssociatedTokenAddressInterface,
-    createAtaInterfaceIdempotent,
+    getTokenPoolInfos,
+    selectTokenPoolInfosForDecompression,
+    selectSplInterfaceInfosForDecompression,
+    getSplInterfaceInfos,
 } from "@lightprotocol/compressed-token";
 import { createAssociatedTokenAccount } from "@solana/spl-token";
 import { homedir } from "os";
@@ -20,25 +21,40 @@ const payer = Keypair.fromSecretKey(
     )
 );
 
-(async function () {
+async function main() {
     const rpc = createRpc(RPC_URL);
 
-    // Setup: Get SPL tokens (needed to wrap)
     const { mint } = await createMint(rpc, payer, payer.publicKey, 9);
+
+    await mintTo(rpc, payer, mint, payer.publicKey, payer, bn(1000));
+
     const splAta = await createAssociatedTokenAccount(
         rpc,
         payer,
         mint,
         payer.publicKey
     );
-    await mintTo(rpc, payer, mint, payer.publicKey, payer, bn(1000));
-    await decompress(rpc, payer, mint, bn(1000), payer, splAta);
 
-    // Wrap SPL tokens to rent-free token ATA
-    const ctokenAta = getAssociatedTokenAddressInterface(mint, payer.publicKey);
-    await createAtaInterfaceIdempotent(rpc, payer, mint, payer.publicKey);
+    // Get and select Interface Info for decompression
+    const amount = bn(500);
+    const splInterfaceInfos = await getSplInterfaceInfos(rpc, mint);
+    const splInterfaceInfo = selectSplInterfaceInfosForDecompression(
+        splInterfaceInfos,
+        amount
+    );
 
-    const tx = await wrap(rpc, payer, splAta, ctokenAta, payer, mint, bn(500));
+    const signature = await decompress(
+        rpc,
+        payer,
+        mint,
+        amount,
+        payer,
+        splAta,
+        splInterfaceInfo
+    );
 
-    console.log("Tx:", tx);
-})();
+    console.log(`Decompressed ${amount.toString()} tokens`);
+    console.log("Tx:", signature);
+}
+
+main().catch(console.error);

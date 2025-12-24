@@ -5,10 +5,12 @@ import {
     createMint,
     mintTo,
     decompress,
+} from "@lightprotocol/compressed-token";
+import {
     wrap,
     getAssociatedTokenAddressInterface,
     createAtaInterfaceIdempotent,
-} from "@lightprotocol/compressed-token";
+} from "@lightprotocol/compressed-token/unified";
 import { createAssociatedTokenAccount } from "@solana/spl-token";
 import { homedir } from "os";
 import { readFileSync } from "fs";
@@ -23,7 +25,6 @@ const payer = Keypair.fromSecretKey(
 (async function () {
     const rpc = createRpc(RPC_URL);
 
-    // Setup: Get SPL tokens (needed to wrap)
     const { mint } = await createMint(rpc, payer, payer.publicKey, 9);
     const splAta = await createAssociatedTokenAccount(
         rpc,
@@ -34,7 +35,6 @@ const payer = Keypair.fromSecretKey(
     await mintTo(rpc, payer, mint, payer.publicKey, payer, bn(1000));
     await decompress(rpc, payer, mint, bn(1000), payer, splAta);
 
-    // Wrap SPL tokens to rent-free token ATA
     const ctokenAta = getAssociatedTokenAddressInterface(mint, payer.publicKey);
     await createAtaInterfaceIdempotent(rpc, payer, mint, payer.publicKey);
 

@@ -1,53 +1,69 @@
+import "dotenv/config";
 import { Keypair } from "@solana/web3.js";
 import { createRpc, bn } from "@lightprotocol/stateless.js";
-import { createMint, mintTo } from "@lightprotocol/compressed-token";
 import {
-  getAtaInterface,
-  getAssociatedTokenAddressInterface,
-  getOrCreateAtaInterface,
+    getOrCreateAtaInterface,
+    transferInterface,
+    createMintInterface,
+    mintToInterface,
+    getAtaInterface,
 } from "@lightprotocol/compressed-token/unified";
+import { homedir } from "os";
+import { readFileSync } from "fs";
 
-async function main() {
-  const rpc = createRpc();
+const RPC_URL = `https://devnet.helius-rpc.com?api-key=${process.env.API_KEY!}`;
+const payer = Keypair.fromSecretKey(
+    new Uint8Array(
+        JSON.parse(readFileSync(`${homedir()}/.config/solana/id.json`, "utf8"))
+    )
+);
 
-  // Setup
-  const payer = Keypair.generate();
-  const airdropSig = await rpc.requestAirdrop(payer.publicKey, 10e9);
-  await rpc.confirmTransaction(airdropSig, "confirmed");
+(async function () {
+    const rpc = createRpc(RPC_URL);
 
-  const owner = Keypair.generate();
-  const airdropSig2 = await rpc.requestAirdrop(owner.publicKey, 1e9);
-  await rpc.confirmTransaction(airdropSig2, "confirmed");
+    // Setup: mint tokens
+    const { mint } = await createMintInterface(
+        rpc,
+        payer,
+        payer.publicKey,
+        null,
+        9
+    );
+    await mintToInterface(rpc, payer, mint, payer.publicKey, payer, bn(1000));
 
-  // Create test mint and tokens
-  const mintAuthority = Keypair.generate();
-  const mintKeypair = Keypair.generate();
-  const { mint } = await createMint(
-    rpc,
-    payer,
-    mintAuthority.publicKey,
-    9,
-    mintKeypair
-  );
+    // Create ATA for payer
+    const { parsed: sourceAta } = await getOrCreateAtaInterface(
+        rpc,
+        payer,
+        mint,
+        payer
+    );
 
-  // Mint tokens (creates cold balance)
-  await mintTo(rpc, payer, mint, owner.publicKey, mintAuthority, bn(1000));
+    // Create ATA for recipient
+    const recipient = Keypair.generate();
+    const { parsed: recipientAta } = await getOrCreateAtaInterface(
+        rpc,
+        payer,
+        mint,
+        recipient
+    );
 
-  // Create ATA and load cold to hot
-  await getOrCreateAtaInterface(rpc, payer, mint, owner);
+    await transferInterface(
+        rpc,
+        payer,
+        sourceAta.address,
+        mint,
+        recipientAta.address,
+        payer,
+        bn(100)
+    );
 
-  // === GET BALANCE ===
-  const ata = getAssociatedTokenAddressInterface(mint, owner.publicKey);
-  const account = await getAtaInterface(rpc, ata, owner.publicKey, mint);
-
-  console.log("ATA:", ata.toBase58());
-  console.log("Balance:", account.parsed.amount.toString());
-
-  // Show balance breakdown by source
-  console.log("\n=== Balance Sources ===");
-  for (const source of account._sources ?? []) {
-    console.log(`${source.type}: ${source.amount.toString()}`);
-  }
-}
-
-main().catch(console.error);
+    // Get recipient's balance after transfer
+    const { parsed: account } = await getAtaInterface(
+        rpc,
+        recipientAta.address,
+        recipient.publicKey,
+        mint
+    );
+    console.log("Recipient's balance:", account.amount);
+})();

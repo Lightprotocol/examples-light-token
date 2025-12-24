@@ -2,65 +2,36 @@ import "dotenv/config";
 import { Keypair } from "@solana/web3.js";
 import { createRpc, bn } from "@lightprotocol/stateless.js";
 import {
-  createMint,
-  mintTo,
-  decompress,
+    createMint,
+    mintTo,
+    decompress,
 } from "@lightprotocol/compressed-token";
 import { createAssociatedTokenAccount } from "@solana/spl-token";
+import { homedir } from "os";
+import { readFileSync } from "fs";
 
-async function main() {
-  // 1. Setup RPC and fund accounts
-  const rpc = createRpc();
-  const payer = Keypair.generate();
-  const airdropSig = await rpc.requestAirdrop(payer.publicKey, 10e9);
-  await rpc.confirmTransaction(airdropSig, "confirmed");
-  console.log("Payer:", payer.publicKey.toBase58());
+const RPC_URL = `https://devnet.helius-rpc.com?api-key=${process.env.API_KEY!}`;
+const payer = Keypair.fromSecretKey(
+    new Uint8Array(
+        JSON.parse(readFileSync(`${homedir()}/.config/solana/id.json`, "utf8"))
+    )
+);
 
-  const owner = Keypair.generate();
-  const airdropSig2 = await rpc.requestAirdrop(owner.publicKey, 1e9);
-  await rpc.confirmTransaction(airdropSig2, "confirmed");
+(async function () {
+    const rpc = createRpc(RPC_URL);
 
-  // 2. Create SPL mint with token pool
-  const mintAuthority = Keypair.generate();
-  const mintKeypair = Keypair.generate();
-  const { mint } = await createMint(
-    rpc,
-    payer,
-    mintAuthority.publicKey,
-    9,
-    mintKeypair
-  );
-  console.log("Mint:", mint.toBase58());
+    // Setup: Get compressed tokens (cold storage)
+    const { mint } = await createMint(rpc, payer, payer.publicKey, 9);
+    await mintTo(rpc, payer, mint, payer.publicKey, payer, bn(1000));
 
-  // 3. Mint compressed tokens (cold storage)
-  await mintTo(rpc, payer, mint, owner.publicKey, mintAuthority, bn(1000));
-  console.log("Minted 1000 compressed tokens");
+    // Decompress to SPL ATA
+    const splAta = await createAssociatedTokenAccount(
+        rpc,
+        payer,
+        mint,
+        payer.publicKey
+    );
+    const tx = await decompress(rpc, payer, mint, bn(500), payer, splAta);
 
-  // 4. Create destination SPL ATA (must exist before decompressing)
-  const splAta = await createAssociatedTokenAccount(
-    rpc,
-    payer,
-    mint,
-    owner.publicKey
-  );
-  console.log("SPL ATA:", splAta.toBase58());
-
-  // 5. Decompress to SPL ATA
-  const signature = await decompress(
-    rpc,
-    payer,
-    mint,
-    bn(500), // amount to decompress
-    owner, // owner of compressed tokens (signer)
-    splAta // destination SPL token account
-  );
-
-  console.log("Decompressed 500 tokens to SPL ATA");
-  console.log("Transaction:", signature);
-}
-
-main().catch((err) => {
-  console.error("Error:", err);
-  if (err.logs) console.error("Logs:", err.logs);
-  process.exit(1);
-});
+    console.log("Tx:", tx);
+})();
