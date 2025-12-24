@@ -1,12 +1,6 @@
 import "dotenv/config";
-import { Keypair, ComputeBudgetProgram } from "@solana/web3.js";
-import {
-    createRpc,
-    buildAndSignTx,
-    sendAndConfirmTx,
-    bn,
-    DerivationMode,
-} from "@lightprotocol/stateless.js";
+import { Keypair, ComputeBudgetProgram, Transaction, sendAndConfirmTransaction } from "@solana/web3.js";
+import { createRpc, bn, DerivationMode } from "@lightprotocol/stateless.js";
 import {
     createMintInterface,
     createAtaInterface,
@@ -63,13 +57,11 @@ const payer = Keypair.fromSecretKey(
         validityProof
     );
 
-    const { blockhash } = await rpc.getLatestBlockhash();
-    const tx = buildAndSignTx(
-        [ComputeBudgetProgram.setComputeUnitLimit({ units: 500_000 }), ix],
-        payer,
-        blockhash
+    const tx = new Transaction().add(
+        ComputeBudgetProgram.setComputeUnitLimit({ units: 500_000 }),
+        ix
     );
-    const signature = await sendAndConfirmTx(rpc, tx);
+    const signature = await sendAndConfirmTransaction(rpc, tx, [payer]);
 
     console.log("Tx:", signature);
 })();

@@ -1,6 +1,6 @@
 import "dotenv/config";
-import { Keypair, ComputeBudgetProgram } from "@solana/web3.js";
-import { createRpc, buildAndSignTx, sendAndConfirmTx, CTOKEN_PROGRAM_ID } from "@lightprotocol/stateless.js";
+import { Keypair, Transaction, sendAndConfirmTransaction } from "@solana/web3.js";
+import { createRpc, CTOKEN_PROGRAM_ID } from "@lightprotocol/stateless.js";
 import {
     createMintInterface,
     createAssociatedTokenAccountInterfaceInstruction,
@@ -22,7 +22,10 @@ const payer = Keypair.fromSecretKey(
     const { mint } = await createMintInterface(rpc, payer, payer, null, 9);
 
     const owner = Keypair.generate();
-    const associatedToken = getAssociatedTokenAddressInterface(mint, owner.publicKey);
+    const associatedToken = getAssociatedTokenAddressInterface(
+        mint,
+        owner.publicKey
+    );
 
     const ix = createAssociatedTokenAccountInterfaceInstruction(
         payer.publicKey,
@@ -32,13 +35,8 @@ const payer = Keypair.fromSecretKey(
         CTOKEN_PROGRAM_ID
     );
 
-    const { blockhash } = await rpc.getLatestBlockhash();
-    const tx = buildAndSignTx(
-        [ComputeBudgetProgram.setComputeUnitLimit({ units: 100_000 }), ix],
-        payer,
-        blockhash
-    );
-    const signature = await sendAndConfirmTx(rpc, tx);
+    const tx = new Transaction().add(ix);
+    const signature = await sendAndConfirmTransaction(rpc, tx, [payer]);
 
     console.log("ATA:", associatedToken.toBase58());
     console.log("Tx:", signature);

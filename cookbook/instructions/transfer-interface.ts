@@ -1,6 +1,11 @@
 import "dotenv/config";
-import { Keypair, ComputeBudgetProgram } from "@solana/web3.js";
-import { createRpc, buildAndSignTx, sendAndConfirmTx } from "@lightprotocol/stateless.js";
+import {
+    Keypair,
+    ComputeBudgetProgram,
+    Transaction,
+    sendAndConfirmTransaction,
+} from "@solana/web3.js";
+import { createRpc } from "@lightprotocol/stateless.js";
 import {
     createMintInterface,
     createAtaInterface,
@@ -25,23 +30,28 @@ const payer = Keypair.fromSecretKey(
 
     const sender = Keypair.generate();
     await createAtaInterface(rpc, payer, mint, sender.publicKey);
-    const senderAta = getAssociatedTokenAddressInterface(mint, sender.publicKey);
+    const senderAta = getAssociatedTokenAddressInterface(
+        mint,
+        sender.publicKey
+    );
     await mintToInterface(rpc, payer, mint, senderAta, payer, 1_000_000_000);
 
     const recipient = Keypair.generate();
     await createAtaInterface(rpc, payer, mint, recipient.publicKey);
-    const recipientAta = getAssociatedTokenAddressInterface(mint, recipient.publicKey);
-
-    const ix = createTransferInterfaceInstruction(senderAta, recipientAta, sender.publicKey, 500_000_000);
-
-    const { blockhash } = await rpc.getLatestBlockhash();
-    const tx = buildAndSignTx(
-        [ComputeBudgetProgram.setComputeUnitLimit({ units: 10_000 }), ix],
-        payer,
-        blockhash,
-        [sender]
+    const recipientAta = getAssociatedTokenAddressInterface(
+        mint,
+        recipient.publicKey
     );
-    const signature = await sendAndConfirmTx(rpc, tx);
+
+    const ix = createTransferInterfaceInstruction(
+        senderAta,
+        recipientAta,
+        sender.publicKey,
+        500_000_000
+    );
+
+    const tx = new Transaction().add(ix);
+    const signature = await sendAndConfirmTransaction(rpc, tx, [payer, sender]);
 
     console.log("Tx:", signature);
 })();

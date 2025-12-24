@@ -1,15 +1,22 @@
 import "dotenv/config";
-import { Keypair, ComputeBudgetProgram, PublicKey } from "@solana/web3.js";
+import {
+    Keypair,
+    ComputeBudgetProgram,
+    PublicKey,
+    Transaction,
+    sendAndConfirmTransaction,
+} from "@solana/web3.js";
 import {
     createRpc,
-    buildAndSignTx,
-    sendAndConfirmTx,
     getBatchAddressTreeInfo,
     selectStateTreeInfo,
     CTOKEN_PROGRAM_ID,
     DerivationMode,
 } from "@lightprotocol/stateless.js";
-import { createMintInstruction, createTokenMetadata } from "@lightprotocol/compressed-token";
+import {
+    createMintInstruction,
+    createTokenMetadata,
+} from "@lightprotocol/compressed-token";
 import { homedir } from "os";
 import { readFileSync } from "fs";
 
@@ -52,17 +59,23 @@ const payer = Keypair.fromSecretKey(
         validityProof,
         addressTreeInfo,
         stateTreeInfo,
-        createTokenMetadata("Example Token", "EXT", "https://example.com/metadata.json")
+        createTokenMetadata(
+            "Example Token",
+            "EXT",
+            "https://example.com/metadata.json"
+        )
     );
 
-    const { blockhash } = await rpc.getLatestBlockhash();
-    const tx = buildAndSignTx(
-        [ComputeBudgetProgram.setComputeUnitLimit({ units: 500_000 }), ix],
-        payer,
-        blockhash,
-        [mintSigner]
+    const tx = new Transaction().add(
+        ComputeBudgetProgram.setComputeUnitLimit({ units: 500_000 }),
+        ix
     );
-    const signature = await sendAndConfirmTx(rpc, tx, { skipPreflight: true });
+    const signature = await sendAndConfirmTransaction(
+        rpc,
+        tx,
+        [payer, mintSigner],
+        { skipPreflight: true }
+    );
 
     console.log("Mint:", mintPda.toBase58());
     console.log("Tx:", signature);
