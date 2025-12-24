@@ -24,17 +24,5 @@
         "delegate:approve": "ts-node-esm actions/delegate-approve.ts",
         "delegate:revoke": "ts-node-esm actions/delegate-revoke.ts",
         "merge-accounts": "ts-node-esm actions/merge-token-accounts.ts"
-    },
-    "dependencies": {
-        "@lightprotocol/compressed-token": "^0.22.1-alpha",
-        "@lightprotocol/stateless.js": "^0.22.1-alpha",
-        "@solana/spl-token": "^0.4.13",
-        "@solana/web3.js": "1.98.4",
-        "dotenv": "^16.5.0"
-    },
-    "devDependencies": {
-        "@types/node": "^20.0.0",
-        "ts-node": "^10.9.2",
-        "typescript": "^5.0.0"
     }
 }

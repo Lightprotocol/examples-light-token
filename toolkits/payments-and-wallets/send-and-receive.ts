@@ -25,7 +25,7 @@ const payer = Keypair.fromSecretKey(
     const { mint } = await createMintInterface(
         rpc,
         payer,
-        payer.publicKey,
+        payer,
         null,
         9
     );
