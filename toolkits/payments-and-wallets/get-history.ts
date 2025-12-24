@@ -20,17 +20,10 @@ const payer = Keypair.fromSecretKey(
 (async function () {
     const rpc = createRpc(RPC_URL);
 
-    // Setup: mint tokens
-    const { mint } = await createMintInterface(
-        rpc,
-        payer,
-        payer,
-        null,
-        9
-    );
-    await mintToInterface(rpc, payer, mint, payer.publicKey, payer, bn(1000));
+    // 1. Create mint
+    const { mint } = await createMintInterface(rpc, payer, payer, null, 9);
 
-    // Create ATA for payer
+    // 2. Create ATA for payer (source)
     const { parsed: sourceAta } = await getOrCreateAtaInterface(
         rpc,
         payer,
@@ -38,7 +31,10 @@ const payer = Keypair.fromSecretKey(
         payer
     );
 
-    // Create ATA for recipient
+    // 3. Mint to payer's ATA
+    await mintToInterface(rpc, payer, mint, sourceAta.address, payer, bn(1000));
+
+    // 4. Create ATA for recipient
     const recipient = Keypair.generate();
     const { parsed: recipientAta } = await getOrCreateAtaInterface(
         rpc,
@@ -47,6 +43,7 @@ const payer = Keypair.fromSecretKey(
         recipient
     );
 
+    // 5. Transfer from payer to recipient
     await transferInterface(
         rpc,
         payer,
@@ -57,7 +54,7 @@ const payer = Keypair.fromSecretKey(
         bn(100)
     );
 
-    // Get transaction history
+    // 6. Get transaction history
     const result = await rpc.getSignaturesForOwnerInterface(payer.publicKey);
     console.log("Signatures:", result.signatures.length);
 })();

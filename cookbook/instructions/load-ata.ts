@@ -42,6 +42,7 @@ const payer = Keypair.fromSecretKey(
         mint,
         payer.publicKey
     );
+    console.log("ixs:", ixs);
 
     if (ixs.length === 0) {
         console.log("Nothing to load");
