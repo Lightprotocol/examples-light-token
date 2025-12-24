@@ -3,8 +3,12 @@
 ## Setup
 
 ```bash
+npm install @lightprotocol/stateless.js@alpha \
+            @lightprotocol/compressed-token@alpha
+```
+
+```bash
 cp .env.example .env # ...and set RPC_URL
-npm install
 ```
 
 ## Run
@@ -24,7 +28,8 @@ npm run cookbook compress:action
 npm run toolkit:payments send-and-receive
 ```
 
-Cookbook examples use local test-validator (install via `npm i -g @lightprotocol/zk-compression-cli@alpha`, then run `light test-validator`).
+
+For local net, install via `npm i -g @lightprotocol/zk-compression-cli@alpha`, then run `light test-validator` in a separate terminal.
 
 ## Quickstart
 
