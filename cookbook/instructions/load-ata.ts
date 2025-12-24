@@ -1,11 +1,26 @@
 import "dotenv/config";
-import { Keypair, ComputeBudgetProgram } from "@solana/web3.js";
-import { createRpc, bn, buildAndSignTx, sendAndConfirmTx } from "@lightprotocol/stateless.js";
-import { createMint, mintTo, createLoadAtaInstructions, getAssociatedTokenAddressInterface } from "@lightprotocol/compressed-token";
+import { Keypair } from "@solana/web3.js";
+import {
+    createRpc,
+    bn,
+    buildAndSignTx,
+    sendAndConfirmTx,
+} from "@lightprotocol/stateless.js";
+import {
+    createMint,
+    mintTo,
+    createLoadAtaInstructions,
+    getAssociatedTokenAddressInterface,
+} from "@lightprotocol/compressed-token";
 import { homedir } from "os";
 import { readFileSync } from "fs";
 
+// devnet:
 const RPC_URL = `https://devnet.helius-rpc.com?api-key=${process.env.API_KEY!}`;
+const rpc = createRpc(RPC_URL);
+// localnet:
+// const rpc = createRpc();
+
 const payer = Keypair.fromSecretKey(
     new Uint8Array(
         JSON.parse(readFileSync(`${homedir()}/.config/solana/id.json`, "utf8"))
@@ -13,29 +28,25 @@ const payer = Keypair.fromSecretKey(
 );
 
 (async function () {
-    const rpc = createRpc(RPC_URL);
-
-    // Setup: Get compressed tokens (cold storage)
+    // Setup: mint directly to cold state
     const { mint } = await createMint(rpc, payer, payer.publicKey, 9);
     await mintTo(rpc, payer, mint, payer.publicKey, payer, bn(1000));
 
-    // Create load instructions to move tokens from cold to hot balance
     const ctokenAta = getAssociatedTokenAddressInterface(mint, payer.publicKey);
 
-    const ixs = await createLoadAtaInstructions(rpc, ctokenAta, payer.publicKey, mint, payer.publicKey);
-
-    if (ixs.length === 0) {
-        console.log("Nothing to load");
-        return;
-    }
-
-    const { blockhash } = await rpc.getLatestBlockhash();
-    const tx = buildAndSignTx(
-        [ComputeBudgetProgram.setComputeUnitLimit({ units: 500_000 }), ...ixs],
-        payer,
-        blockhash
+    // load from cold to hot state
+    const ixs = await createLoadAtaInstructions(
+        rpc,
+        ctokenAta,
+        payer.publicKey,
+        mint,
+        payer.publicKey
     );
-    const signature = await sendAndConfirmTx(rpc, tx);
 
+    if (ixs.length === 0) return console.log("Nothing to load");
+
+    const blockhash = await rpc.getLatestBlockhash();
+    const tx = buildAndSignTx(ixs, payer, blockhash.blockhash);
+    const signature = await sendAndConfirmTx(rpc, tx);
     console.log("Tx:", signature);
 })();

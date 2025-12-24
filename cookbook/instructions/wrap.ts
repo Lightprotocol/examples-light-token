@@ -1,11 +1,6 @@
 import "dotenv/config";
-import { Keypair, ComputeBudgetProgram } from "@solana/web3.js";
-import {
-    createRpc,
-    buildAndSignTx,
-    sendAndConfirmTx,
-    bn,
-} from "@lightprotocol/stateless.js";
+import { Keypair, ComputeBudgetProgram, Transaction, sendAndConfirmTransaction } from "@solana/web3.js";
+import { createRpc, bn } from "@lightprotocol/stateless.js";
 import {
     createMint,
     mintTo,
@@ -19,7 +14,12 @@ import { createAssociatedTokenAccount } from "@solana/spl-token";
 import { homedir } from "os";
 import { readFileSync } from "fs";
 
+// devnet:
 const RPC_URL = `https://devnet.helius-rpc.com?api-key=${process.env.API_KEY!}`;
+const rpc = createRpc(RPC_URL);
+// localnet:
+// const rpc = createRpc();
+
 const payer = Keypair.fromSecretKey(
     new Uint8Array(
         JSON.parse(readFileSync(`${homedir()}/.config/solana/id.json`, "utf8"))
@@ -27,7 +27,6 @@ const payer = Keypair.fromSecretKey(
 );
 
 (async function () {
-    const rpc = createRpc(RPC_URL);
 
     // Setup: Get SPL tokens (needed to wrap)
     const { mint } = await createMint(rpc, payer, payer.publicKey, 9);
@@ -61,13 +60,11 @@ const payer = Keypair.fromSecretKey(
         payer.publicKey
     );
 
-    const { blockhash } = await rpc.getLatestBlockhash();
-    const tx = buildAndSignTx(
-        [ComputeBudgetProgram.setComputeUnitLimit({ units: 200_000 }), ix],
-        payer,
-        blockhash
+    const tx = new Transaction().add(
+        ComputeBudgetProgram.setComputeUnitLimit({ units: 200_000 }),
+        ix
     );
-    const signature = await sendAndConfirmTx(rpc, tx);
+    const signature = await sendAndConfirmTransaction(rpc, tx, [payer]);
 
     console.log("Tx:", signature);
 })();

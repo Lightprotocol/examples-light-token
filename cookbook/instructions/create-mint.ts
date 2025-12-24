@@ -1,15 +1,21 @@
 import "dotenv/config";
-import { Keypair, ComputeBudgetProgram, PublicKey } from "@solana/web3.js";
+import {
+    Keypair,
+    ComputeBudgetProgram,
+    PublicKey,
+    Transaction,
+    sendAndConfirmTransaction,
+} from "@solana/web3.js";
 import {
     createRpc,
-    buildAndSignTx,
-    sendAndConfirmTx,
     getBatchAddressTreeInfo,
     selectStateTreeInfo,
     CTOKEN_PROGRAM_ID,
-    DerivationMode,
 } from "@lightprotocol/stateless.js";
-import { createMintInstruction, createTokenMetadata } from "@lightprotocol/compressed-token";
+import {
+    createMintInstruction,
+    createTokenMetadata,
+} from "@lightprotocol/compressed-token";
 import { homedir } from "os";
 import { readFileSync } from "fs";
 
@@ -22,7 +28,12 @@ function findMintAddress(mintSigner: PublicKey): [PublicKey, number] {
     );
 }
 
+// devnet:
 const RPC_URL = `https://devnet.helius-rpc.com?api-key=${process.env.API_KEY!}`;
+const rpc = createRpc(RPC_URL);
+// localnet:
+// const rpc = createRpc();
+
 const payer = Keypair.fromSecretKey(
     new Uint8Array(
         JSON.parse(readFileSync(`${homedir()}/.config/solana/id.json`, "utf8"))
@@ -30,8 +41,6 @@ const payer = Keypair.fromSecretKey(
 );
 
 (async function () {
-    const rpc = createRpc(RPC_URL);
-
     const mintSigner = Keypair.generate();
     const addressTreeInfo = getBatchAddressTreeInfo();
     const stateTreeInfo = selectStateTreeInfo(await rpc.getStateTreeInfos());
@@ -39,8 +48,7 @@ const payer = Keypair.fromSecretKey(
 
     const validityProof = await rpc.getValidityProofV2(
         [],
-        [{ address: mintPda.toBytes(), treeInfo: addressTreeInfo }],
-        DerivationMode.compressible
+        [{ address: mintPda.toBytes(), treeInfo: addressTreeInfo }]
     );
 
     const ix = createMintInstruction(
@@ -52,17 +60,21 @@ const payer = Keypair.fromSecretKey(
         validityProof,
         addressTreeInfo,
         stateTreeInfo,
-        createTokenMetadata("Example Token", "EXT", "https://example.com/metadata.json")
+        createTokenMetadata(
+            "Example Token",
+            "EXT",
+            "https://example.com/metadata.json"
+        )
     );
 
-    const { blockhash } = await rpc.getLatestBlockhash();
-    const tx = buildAndSignTx(
-        [ComputeBudgetProgram.setComputeUnitLimit({ units: 500_000 }), ix],
-        payer,
-        blockhash,
-        [mintSigner]
+    const tx = new Transaction().add(
+        ComputeBudgetProgram.setComputeUnitLimit({ units: 1_000_000 }),
+        ix
     );
-    const signature = await sendAndConfirmTx(rpc, tx, { skipPreflight: true });
+    const signature = await sendAndConfirmTransaction(rpc, tx, [
+        payer,
+        mintSigner,
+    ]);
 
     console.log("Mint:", mintPda.toBase58());
     console.log("Tx:", signature);

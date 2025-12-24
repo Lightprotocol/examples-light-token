@@ -9,16 +9,5 @@
         "get-history": "ts-node-esm get-history.ts",
         "wrap": "ts-node-esm wrap.ts",
         "unwrap": "ts-node-esm unwrap.ts"
-    },
-    "dependencies": {
-        "@lightprotocol/compressed-token": "^0.22.1-alpha",
-        "@lightprotocol/stateless.js": "^0.22.1-alpha",
-        "@solana/spl-token": "^0.4.13",
-        "@solana/web3.js": "1.98.4",
-        "dotenv": "^16.5.0"
-    },
-    "devDependencies": {
-        "ts-node": "^10.9.2",
-        "typescript": "^5.7.2"
     }
 }
